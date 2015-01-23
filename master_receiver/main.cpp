@@ -3,12 +3,8 @@
 #include <stdio.h>
 #include "xbee.h"
 #include "nRF24L01P.h"
-#include "TextLCD.h"
 #include "../constants.h"
-#include <string>
-#include <sstream>
 
-using namespace std;
 #define XBEE_SEND_INTERVAL 2
 #define PC_SEND_INTERVAL 1
 #define MY_ADDR 0
@@ -26,8 +22,6 @@ Ticker events;
 Timeout timeout;
 double speed = 0.0; //calculated speed
 double cadence = 0.0;
-int gear_val = 0;
-
 char receive_buffer[RF24_TRANSFER_SIZE];
 char speed_buffer[RF24_TRANSFER_SIZE];
 char send_buffer[RF24_TRANSFER_SIZE];
@@ -184,7 +178,6 @@ int main() {
             //|---------------------
             //gear              time
             lcd.cls();
-						int last_time = 60;//FOR NOW
             std::ostringstream format_data;
             format_data << "GEAR         CADENCE";
             //line 2
