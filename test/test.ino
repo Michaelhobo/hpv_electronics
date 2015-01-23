@@ -22,7 +22,7 @@ void setup(void)
 	radio.setChannel(101);
 	radio.setAutoAck(true);
         fdevopen(&serial_console_putc, NULL);
-        radio.openReadingPipe(1, 0xF0F0F0F0D2);
+        //radio.openReadingPipe(1, 0xF0F0F0F0D2);
         radio.printDetails();
         radio.openWritingPipe(0x00F0F0F0F0);
 

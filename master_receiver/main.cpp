@@ -78,15 +78,15 @@ void rf24_init() {
 	rf24.setTransferSize(RF24_TRANSFER_SIZE);
 	rf24.setCrcWidth(8);
 	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P0);
-	//rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P2);
-	//rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P3);
-	//rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P4);
-	//rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P5);
-	rf24.setRxAddress(0x00F0F0F0F0, paddr_size, NRF24L01P_PIPE_P0);
-	//rf24.setRxAddress(0x0000000002, paddr_size, NRF24L01P_PIPE_P2);
-	//rf24.setRxAddress(0x0000000003, paddr_size, NRF24L01P_PIPE_P3);
-	//rf24.setRxAddress(0x0000000004, paddr_size, NRF24L01P_PIPE_P4);
-	//rf24.setRxAddress(0x0000000005, paddr_size, NRF24L01P_PIPE_P5);
+	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P2);
+	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P3);
+	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P4);
+	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P5);
+	rf24.setRxAddress(0x00F0F0F0F1, paddr_size, NRF24L01P_PIPE_P0);
+	rf24.setRxAddress(0x00F0F0F0F2, paddr_size, NRF24L01P_PIPE_P2);
+	rf24.setRxAddress(0x00F0F0F0F3, paddr_size, NRF24L01P_PIPE_P3);
+	rf24.setRxAddress(0x00F0F0F0F4, paddr_size, NRF24L01P_PIPE_P4);
+	rf24.setRxAddress(0x00F0F0F0F5, paddr_size, NRF24L01P_PIPE_P5);
 	rf24.setReceiveMode();
 	rf24.enable();
 	pc.printf("MASTER: rf24 init finished\r\n");
@@ -111,16 +111,6 @@ bool send_sensor(uint8_t id, char *data) {
 	}
 	return received;
 }
-/* Process a connection. */
-void process_connection() {
-	uint8_t src_addr = (uint8_t) receive_buffer[0];
-	if (sensor_states[src_addr] == DISCONNECTED) {
-		if (strstr(receive_buffer + 1, "connect") == (receive_buffer + 1)) {
-			led4 = 1;
-			sensor_states[src_addr] = CONNECTED;
-		}
-	}
-}
 /* Process RF24 input and send it to the correct handler. */
 void process_rf_input() {
 	uint8_t src_addr = (uint8_t) receive_buffer[0];
@@ -130,6 +120,23 @@ void process_rf_input() {
 	}
 }
 
+/* Process a connection. */
+void process_connection() {
+	uint8_t src_addr = (uint8_t) receive_buffer[0];
+	if (src_addr >= 0 && src_addr <= 5) {
+		//pc.printf("src_addr in range.\r\n");
+		if (sensor_states[src_addr] == DISCONNECTED) {
+			if (strstr(receive_buffer + 1, "connect") == (receive_buffer + 1)) {
+				led4 = 1;
+				sensor_states[src_addr] = CONNECTED;
+			}
+		} else if (sensor_states[src_addr] == CONNECTED) {
+			process_rf_input();
+		}
+	} else {
+		pc.printf("src_addr out of range\r\n");
+	}
+}
 /* Main sending loop. */
 int main() {
 	init();
@@ -146,18 +153,22 @@ int main() {
 			process_connection();
 		} else if (rf24.readable(NRF24L01P_PIPE_P2)) {
 			led1 = 1;
+			pc.printf("rf24 pipe2.\r\n");
 			rf24.read(NRF24L01P_PIPE_P2, receive_buffer, RF24_TRANSFER_SIZE);
 			process_rf_input();
 		} else if (rf24.readable(NRF24L01P_PIPE_P3)) {
-			led1 = 1;
+			led3 = 1;
+			pc.printf("rf24 pipe3.\r\n");
 			rf24.read(NRF24L01P_PIPE_P3, receive_buffer, RF24_TRANSFER_SIZE);
 			process_rf_input();
 		} else if (rf24.readable(NRF24L01P_PIPE_P4)) {
 			led1 = 1;
+			pc.printf("rf24 pipe4.\r\n");
 			rf24.read(NRF24L01P_PIPE_P4, receive_buffer, RF24_TRANSFER_SIZE);
 			process_rf_input();
 		} else if (rf24.readable(NRF24L01P_PIPE_P5)) {
 			led1 = 1;
+			pc.printf("rf24 pipe5.\r\n");
 			rf24.read(NRF24L01P_PIPE_P5, receive_buffer, RF24_TRANSFER_SIZE);
 			process_rf_input();
 		}

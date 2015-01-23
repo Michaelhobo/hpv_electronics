@@ -15,10 +15,9 @@ int serial_console_putc(char c, FILE *) {
 }
 
 uint8_t state; //state that the sensor is in. 0 = connected, 1 = connected, 2 = sleep
-long my_pipe;
 char *name = "template";
-uint64_t master_general_address = (MY_ADDR % 4) + 2; //master will read on this address
-uint64_t master_connection_address = 0x00F0F0F0F0; //this is the address we write to connect to the master
+uint64_t master_general_address = ((MY_ADDR % 4) + 2) & 0x00F0F0F0F0; //master will read on this address
+uint64_t master_connection_address = 0x00F0F0F0F1; //this is the address we write to connect to the master
 char read_buffer[RF24_TRANSFER_SIZE];
 char write_buffer[RF24_TRANSFER_SIZE];
 char *w_data;
@@ -28,7 +27,6 @@ void setup() {
 	state = DISCONNECTED;
 	write_buffer[0] = MY_ADDR;
 	w_data = (char *) (write_buffer + 1);
-	my_pipe = (MY_ADDR % 4) + 2;
 	rf24.begin();
 	rf24.setDataRate(RF24_1MBPS);
 	rf24.setCRCLength(RF24_CRC_8);
@@ -61,7 +59,14 @@ bool connect_master() {
 	int timeout = 100; //timeout in ms;
 	while (!connected) {
 		rf24.stopListening();
-		bool connected = rf24.write(start_msg, sizeof(char) * RF24_TRANSFER_SIZE);
+	connected = rf24.write( start_msg,sizeof(char)*10);
+	if (connected) {
+		Serial.println("connect ok...\n\r"); 
+	} else  {
+		Serial.println("connect failed.\n\r");
+        }
+	delay(100);
+		/*bool connected = rf24.write(start_msg, sizeof(char) * RF24_TRANSFER_SIZE);
 		if (!connected) {
 			if (timeout > 1000) {
 				free(start_msg);
@@ -72,7 +77,7 @@ bool connect_master() {
 
 			timeout += 100;
 			Serial.print("failed...");
-		}
+		}*/
 		rf24.startListening();
 
 	}
@@ -91,7 +96,13 @@ void write_data() {
 	rf24.stopListening();
 	bool received = false;
 	while (!received) {
-		received = rf24.write(write_buffer, RF24_TRANSFER_SIZE);
+		received = rf24.write(write_buffer, sizeof(char) * 10);
+                	if (received) {
+		Serial.println("write ok...\n\r"); 
+	} else  {
+		Serial.println("write failed.\n\r");
+        }
+	delay(100);
 		rf24.startListening();
 	}
 }
@@ -126,15 +137,20 @@ void loop() {
 	// put your main code here, to run repeatedly
 	Serial.println("looping...");
 	if (state == DISCONNECTED) {
+                Serial.println("Disconnected");
 		if (!connect_master()) {
 			state = SLEEP;
 			Serial.println("failed to connect");
-		}
+		} else {
+                    state = CONNECTED;
+                }
 	} else if (state == CONNECTED) {
+                Serial.println("Connected");
 		read_data();
 		write_data();
-		delay(100);
+		delay(1000);
 	} else if (state == SLEEP) {
+                Serial.println("Sleep");
 		delay(1000);
 		if (connect_master()) {
 			state = CONNECTED;
@@ -143,6 +159,7 @@ void loop() {
 			//should it wake up?
                 }
 	} else if (state == DEEP_SLEEP) {
+                  Serial.println("Deep Sleep");
 			delay(10000);
 			if (connect_master()) {
 				state = CONNECTED;
