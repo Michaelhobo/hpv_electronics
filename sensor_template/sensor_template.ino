@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "RF24.h"
 #include "println.h"
-#include "../constants.h"
+#include "constants.h"
 
 #define MY_ADDR 1
 RF24 rf24(9, 10);
@@ -18,16 +18,16 @@ uint8_t state; //state that the sensor is in. 0 = connected, 1 = connected, 2 = 
 long my_pipe;
 char *name = "template";
 uint64_t master_general_address = (MY_ADDR % 4) + 2; //master will read on this address
-uint64_t master_connection_address = 0x0000000001; //this is the address we write to connect to the master
+uint64_t master_connection_address = 0x00F0F0F0F0; //this is the address we write to connect to the master
 char read_buffer[RF24_TRANSFER_SIZE];
 char write_buffer[RF24_TRANSFER_SIZE];
-char *write_data;
+char *w_data;
 /* Run setup code. */
 void setup() {
 	Serial.begin(9600);
 	state = DISCONNECTED;
 	write_buffer[0] = MY_ADDR;
-	write_data = write_buffer + 1;
+	w_data = (char *) (write_buffer + 1);
 	my_pipe = (MY_ADDR % 4) + 2;
 	rf24.begin();
 	rf24.setDataRate(RF24_1MBPS);
@@ -43,7 +43,7 @@ void setup() {
 	/*if (!connect_master()) {
 		shutdown();
 		}*/
-	rf24.openWritingPipe(my_pipe);
+	//rf24.openWritingPipe(my_pipe);
 }
 
 
@@ -54,9 +54,9 @@ bool connect_master() {
 	sprintf(start_msg, "%c%s", MY_ADDR, "connect");
 	Serial.print("saved start message");
 	Serial.flush();
-	//rf24.openWritingPipe(master_connection_address);
-	rf24.openWritingPipe(0x00F0F0F0F0);
-	rf24.openReadingPipe(1, 0xF0F0F0F0D2);
+	rf24.openWritingPipe(master_connection_address);
+	//rf24.openWritingPipe(0x00F0F0F0F0);
+	//rf24.openReadingPipe(1, 0xF0F0F0F0D2);
 	bool connected = false;
 	int timeout = 100; //timeout in ms;
 	while (!connected) {
@@ -141,7 +141,8 @@ void loop() {
 		} else {
 			Serial.println("failed to connect");
 			//should it wake up?
-		} else if (state == DEEP_SLEEP) {
+                }
+	} else if (state == DEEP_SLEEP) {
 			delay(10000);
 			if (connect_master()) {
 				state = CONNECTED;
@@ -150,4 +151,4 @@ void loop() {
 			}
 		}
 	}
-}
+

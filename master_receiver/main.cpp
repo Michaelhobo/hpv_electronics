@@ -77,17 +77,16 @@ void rf24_init() {
 	rf24.setRfFrequency(2501);
 	rf24.setTransferSize(RF24_TRANSFER_SIZE);
 	rf24.setCrcWidth(8);
-	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P1);
-	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P1);
-	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P2);
-	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P3);
-	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P4);
-	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P5);
-	rf24.setRxAddress(0x0000000001, paddr_size, NRF24L01P_PIPE_P1);
-	rf24.setRxAddress(0x0000000002, paddr_size, NRF24L01P_PIPE_P2);
-	rf24.setRxAddress(0x0000000003, paddr_size, NRF24L01P_PIPE_P3);
-	rf24.setRxAddress(0x0000000004, paddr_size, NRF24L01P_PIPE_P4);
-	rf24.setRxAddress(0x0000000005, paddr_size, NRF24L01P_PIPE_P5);
+	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P0);
+	//rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P2);
+	//rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P3);
+	//rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P4);
+	//rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P5);
+	rf24.setRxAddress(0x00F0F0F0F0, paddr_size, NRF24L01P_PIPE_P0);
+	//rf24.setRxAddress(0x0000000002, paddr_size, NRF24L01P_PIPE_P2);
+	//rf24.setRxAddress(0x0000000003, paddr_size, NRF24L01P_PIPE_P3);
+	//rf24.setRxAddress(0x0000000004, paddr_size, NRF24L01P_PIPE_P4);
+	//rf24.setRxAddress(0x0000000005, paddr_size, NRF24L01P_PIPE_P5);
 	rf24.setReceiveMode();
 	rf24.enable();
 	pc.printf("MASTER: rf24 init finished\r\n");
@@ -124,13 +123,10 @@ void process_connection() {
 }
 /* Process RF24 input and send it to the correct handler. */
 void process_rf_input() {
-	uint8_t dest_addr = (uint8_t) receive_buffer[0];
-	if (dest_addr == MY_ADDR) {
-		led2 = 1;
-		uint8_t src_addr = (uint8_t) receive_buffer[1];
-		if (sensor_handlers[src_addr]){
-			sensor_handlers[src_addr](receive_buffer + 2);
-		}
+	uint8_t src_addr = (uint8_t) receive_buffer[0];
+	led2 = 1;
+	if (sensor_handlers[src_addr]){
+		sensor_handlers[src_addr](receive_buffer + 1);
 	}
 }
 
@@ -141,10 +137,10 @@ int main() {
 	//events.attach(&send_xbee_speed, XBEE_SEND_INTERVAL);
 	//events.attach(&show_usbterm_speed, PC_SEND_INTERVAL);
 	while(1) {
-		if (rf24.readable(NRF24L01P_PIPE_P1)) {
+		if (rf24.readable(NRF24L01P_PIPE_P0)) {
 			led1 = 1;
 			pc.printf("rf24 connection.\r\n");
-			rf24.read(NRF24L01P_PIPE_P1, receive_buffer, RF24_TRANSFER_SIZE);
+			rf24.read(NRF24L01P_PIPE_P0, receive_buffer, RF24_TRANSFER_SIZE);
 			pc.printf(receive_buffer);
 			pc.printf("\r\n");
 			process_connection();
