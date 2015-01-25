@@ -26,7 +26,7 @@ char speed_buffer[RF24_TRANSFER_SIZE];
 char send_buffer[RF24_TRANSFER_SIZE];
 const char *sensor_names[255] = {0};
 void (*sensor_handlers[255])(char *data);
-char sensor_states[255] = {DISCONNECTED};
+uint8_t sensor_states[255];
 
 /* RF24 Handlers. They must all take in a char* parameter. */
 void receiver_handler(char *data);
@@ -56,7 +56,7 @@ void telemetry_init() {
 void init_sensor(int id, const char *name, void (*handler)(char *)) {
 	sensor_names[id] = name;
 	sensor_handlers[id] = handler;
-	sensor_states[id] = 0;
+	sensor_states[id] = (uint8_t) DISCONNECTED;
 }
 
 /* initialize all rf24 sensor data. */
@@ -127,10 +127,12 @@ void process_connection() {
 		//pc.printf("src_addr in range.\r\n");
 		if (sensor_states[src_addr] == DISCONNECTED) {
 			if (strstr(receive_buffer + 1, "connect") == (receive_buffer + 1)) {
-				led4 = 1;
-				sensor_states[src_addr] = CONNECTED;
+				//led4 = 1;
+				pc.printf("sensor_states[%d] = %d\r\n", src_addr, sensor_states[src_addr]);
+				sensor_states[src_addr] = (uint8_t) CONNECTED;
 			}
 		} else if (sensor_states[src_addr] == CONNECTED) {
+			pc.printf("CONNECTED");
 			process_rf_input();
 		}
 	} else {
@@ -235,7 +237,7 @@ unsigned int speed_seqno = 0;
 char *spd_string = (char *) malloc(8);
 void speed_handler(char *data) {
 	led3 = 1;
-	unsigned int seqno = get_seqno(data);
+/*	unsigned int seqno = get_seqno(data);
 	if (seqno > speed_seqno) {
 		speed = get_speed(data); //should we update anything?
 		sprintf(spd_string, "%3.4f", speed);
@@ -245,7 +247,7 @@ void speed_handler(char *data) {
 		if (speed_seqno > 0) {
 			send_ack(1, speed_seqno, spd_string);
 		}
-	}
+	}*/
 }
 
 /* Get cadence from data packet. */
