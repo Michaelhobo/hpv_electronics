@@ -26,8 +26,8 @@ char *w_data;
 /* Run setup code. */
 
 //const double PI = 
-const int SPOKES = 24;
-const int RADIUSOFWHEEL = 18;
+const int SPOKES = 32;
+const double CIRCUMFERENCEOFWHEEL = 2.096/1609;
 int toTurnOnPin = 0;
 bool on = false;
 int ticks = 0;
@@ -198,7 +198,7 @@ void loop() {
       Serial.println("failed to connect");
     }
   }
-  mph = ticks*3600.0*(2*PI*RADIUSOFWHEEL)/SPOKES;
+  mph = ticks*3600.0*CIRCUMFERENCEOFWHEEL/SPOKES;
   ticks = 0;
 }
 
