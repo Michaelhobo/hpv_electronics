@@ -23,10 +23,12 @@
 #include "TextLCD.h"
 #include "mbed.h"
 
-TextLCD::TextLCD(PinName rs, PinName e, PinName d4, PinName d5,
-                 PinName d6, PinName d7, LCDType type) : _rs(rs),
-        _e(e), _d(d4, d5, d6, d7),
+
+TextLCD::TextLCD(PinName rs, PinName e, PinName d0, PinName d1,
+                 PinName d2, PinName d3, LCDType type) : _rs(rs),
+        _e(e), _d(d0, d1, d2, d3),
         _type(type) {
+    _type = LCD20x4;
 
     _e  = 1;
     _rs = 0;            // command mode
