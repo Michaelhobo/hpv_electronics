@@ -37,11 +37,6 @@ void setup() {
 	/* For debugging, comment out when not needed. */
 	fdevopen(&serial_console_putc, NULL);
 	rf24.printDetails();
-
-	/*if (!connect_master()) {
-		shutdown();
-		}*/
-	//rf24.openWritingPipe(my_pipe);
 }
 
 
@@ -108,6 +103,7 @@ void write_data() {
 }
 /* Shut down this sensor. */
 void shutdown() {
+	
 	//power down antenna, set all unused pins low, put microcontroller to sleep for 1/2(?) second then wake up
 }
 

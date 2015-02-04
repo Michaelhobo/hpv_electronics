@@ -1,197 +1,300 @@
 #include "mbed.h"
+#include <limits.h>
+#include <stdio.h>
 #include "xbee.h"
-#include "TextLCD.h"
-#include <string>
-#include <sstream>
-struct node;
-using namespace std;
-AnalogIn BrakeSensor(p15);
-AnalogIn CadenceSensor(p16);
-AnalogIn SpeedSensor(p17);
-AnalogIn GearSensor(p18);
-Timer t;
-xbee xbee1(p9,p10,p11); //Initalise xbee_lib
-Serial pc(USBTX, USBRX); //Initalise PC serial comms for debugging
-TextLCD lcd(p26, p25, p24, p23, p22, p21); // rs, e, d4-d7
+#include "nRF24L01P.h"
+#include "../constants.h"
 
+#define XBEE_SEND_INTERVAL 2
+#define PC_SEND_INTERVAL 1
+#define MY_ADDR 0
 
-float current_time; //updated every iteration of the main loop
+DigitalOut led1(LED1);
+DigitalOut led2(LED2);
+DigitalOut led3(LED3);
+DigitalOut led4(LED4);
+Serial pc(USBTX, USBRX); // tx, rx
+xbee xbee(p13, p14, p12);
+nRF24L01P rf24(p5, p6, p7, p8, p9, p10);
 
-//------------------LINKED LIST IMPLEMENTATION-------------------\\
+Ticker events;
+Timeout timeout;
+double speed = 0.0; //calculated speed
+double cadence = 0.0;
+char receive_buffer[RF24_TRANSFER_SIZE];
+char speed_buffer[RF24_TRANSFER_SIZE];
+char send_buffer[RF24_TRANSFER_SIZE];
+const char *sensor_names[255] = {0};
+void (*sensor_handlers[255])(char *data);
+uint8_t sensor_states[255];
 
-struct node {
-    float item;
-    node* next;
-    node* prev;
-    int len;
-    };
+/* RF24 Handlers. They must all take in a char* parameter. */
+void receiver_handler(char *data);
+void speed_handler(char *data);
+void cadence_handler(char *data);
+void rear_lights_handler(char *data);
+void front_lights_handler(char *data);
+void shifter_handler(char *data);
 
-void appendToList(node* sentinel,float time){
-    sentinel->len += 1;
-    node* new_node = new node;
-    new_node->item = time;
-    sentinel->prev->next = new_node;
-    new_node->prev = sentinel->prev;
-    sentinel->prev = new_node;
-    new_node->next = sentinel;
+/* Prints speed to terminal through a usb. */
+void show_usbterm_speed() {
+	pc.printf("speed: %f\n", speed);
 }
 
-float front(node* sentinel){
-    return sentinel->next->item;
+/* Sends speed to XBEE. */
+void send_xbee_speed() {
+	sprintf(speed_buffer, "%f\n", speed);
 }
 
-void deleteFront(node* sentinel){
-    sentinel->len -= 1;
-    sentinel->next = sentinel->next->next;
-    if (sentinel->len <= 1){
-        sentinel->prev = sentinel->next;
-    }
-}
-//---------------END LINKED LIST IMPLEMENTATION-------------------\\
-
-
-
-
-float brakeCutoff = 0.5;
-bool brake(float brakeValue){
-    return (brakeValue > brakeCutoff);
-    //return (brakeValue > 0.02);
+/* Initialize xbee for telemetry. */
+void telemetry_init() {
+	// convert units before to minimize calculations in critical section
+	pc.printf("Initializing.\n");
 }
 
-float stepSize = 0.1;
-int gear(float gearValue){
-    int gearReading = (int) (gearValue / stepSize);
-    return gearReading;
+/* Initialize one sensor's values. */
+void init_sensor(int id, const char *name, void (*handler)(char *)) {
+	sensor_names[id] = name;
+	sensor_handlers[id] = handler;
+	sensor_states[id] = (uint8_t) DISCONNECTED;
 }
 
-int max_num_zeros = 1;
-int window_time = 2.5;
-int s_current_num_zeros = 0;
-bool s_in_magnet_pass = false;
-float WHEEL_RADIUS = -1; //fix
-float speed(float speedValue,node* speed_sentinel){
-   if (!s_in_magnet_pass){
-        if (speedValue <= 0.002){
-            s_current_num_zeros++;
-            if (s_current_num_zeros > max_num_zeros){
-                appendToList(speed_sentinel,current_time);
-                s_in_magnet_pass = true;
-                s_current_num_zeros = 0;
-            }
-        } else {
-            s_current_num_zeros = 0;
-        }
-    } else if (speedValue != 0) {
-        s_in_magnet_pass = false;
-    }
-    while (speed_sentinel->len > 0 && current_time - front(speed_sentinel) > window_time){
-        deleteFront(speed_sentinel);
-    }
-    return WHEEL_RADIUS*6.28*speed_sentinel->len / window_time;
+/* initialize all rf24 sensor data. */
+void rf24_init() {
+	pc.printf("rf24 init\r\n");
+	pc.printf( "nRF24L01+ Frequency    : %d MHz\r\n",  rf24.getRfFrequency() );
+	pc.printf( "nRF24L01+ Output power : %d dBm\r\n",  rf24.getRfOutputPower() );
+	pc.printf( "nRF24L01+ Data Rate    : %d kbps\r\n", rf24.getAirDataRate() );
+	pc.printf( "nRF24L01+ TX Address   : 0x%010llX\r\n", rf24.getTxAddress() );
+	pc.printf( "nRF24L01+ RX Address   : 0x%010llX\r\n", rf24.getRxAddress() );
+	init_sensor(0, "receiver", &receiver_handler);
+	init_sensor(1, "speed", &speed_handler);
+	init_sensor(2, "cadence", &cadence_handler);
+	init_sensor(3, "rear_lights", &rear_lights_handler);
+	init_sensor(4, "front_lights", &front_lights_handler);
+	init_sensor(5, "shifter", &shifter_handler);
+	rf24.powerUp();
+	rf24.setRfFrequency(2501);
+	rf24.setTransferSize(RF24_TRANSFER_SIZE);
+	rf24.setCrcWidth(8);
+	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P0);
+	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P2);
+	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P3);
+	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P4);
+	rf24.enableAutoAcknowledge(NRF24L01P_PIPE_P5);
+	rf24.setRxAddress(0x00F0F0F0F1, paddr_size, NRF24L01P_PIPE_P0);
+	rf24.setRxAddress(0x00F0F0F0F2, paddr_size, NRF24L01P_PIPE_P2);
+	rf24.setRxAddress(0x00F0F0F0F3, paddr_size, NRF24L01P_PIPE_P3);
+	rf24.setRxAddress(0x00F0F0F0F4, paddr_size, NRF24L01P_PIPE_P4);
+	rf24.setRxAddress(0x00F0F0F0F5, paddr_size, NRF24L01P_PIPE_P5);
+	rf24.setReceiveMode();
+	rf24.enable();
+	pc.printf("MASTER: rf24 init finished\r\n");
 }
-bool c_in_magnet_pass = false;
-int c_current_num_zeros = 0;
-float cadence(float cadValue,node* cad_sentinel){
-    if (!c_in_magnet_pass){
-        if (cadValue <= 0.002){
-            c_current_num_zeros++;
-            if (c_current_num_zeros > max_num_zeros){
-                if (current_time == 0){
-                    pc.printf("adding a 0");
-                }
-                appendToList(cad_sentinel,current_time);
-                c_in_magnet_pass = true;
-                c_current_num_zeros = 0;
-            }
-        } else {
-            c_current_num_zeros = 0;
-        }
-    } else if (cadValue > 0.005) {
-        c_in_magnet_pass = false;
-    }
-    while (cad_sentinel->len > 0 && current_time - front(cad_sentinel) > window_time){
-        pc.printf("updating: now %f ",current_time);
-        pc.printf(" deleting %f\n",front(cad_sentinel));
-        deleteFront(cad_sentinel);
-    }
-    return 60*cad_sentinel->len / window_time;
+
+/* Initialize everything necessary for the scripts. */
+void init() {
+	pc.printf("init");
+	telemetry_init();
+	rf24_init();
+	//lcd.putc('0');
 }
+
+/* Send to a sensor with an id. */
+bool send_sensor(uint8_t id, char *data) {
+	send_buffer[0] = id;
+	sprintf(send_buffer + 1, "%s", data);
+	uint64_t pipe_addr = (id << 8) & 1;
+	rf24.setTxAddress(pipe_addr, paddr_size);
+	bool received = false;
+	for (int i = 0; i < 10 && !received; i++) {
+		received = rf24.write(NRF24L01P_PIPE_P0, send_buffer, RF24_TRANSFER_SIZE);
+	}
+	return received;
+}
+/* Process RF24 input and send it to the correct handler. */
+void process_rf_input() {
+	uint8_t src_addr = (uint8_t) receive_buffer[0];
+	led2 = 1;
+	if (sensor_handlers[src_addr]){
+		sensor_handlers[src_addr](receive_buffer + 1);
+	}
+}
+
+/* Process a connection. */
+void process_connection() {
+	uint8_t src_addr = (uint8_t) receive_buffer[0];
+	if (src_addr >= 0 && src_addr <= 5) {
+		//pc.printf("src_addr in range.\r\n");
+		if (sensor_states[src_addr] == DISCONNECTED) {
+			if (strstr(receive_buffer + 1, "connect") == (receive_buffer + 1)) {
+				//led4 = 1;
+				pc.printf("sensor_states[%d] = %d\r\n", src_addr, sensor_states[src_addr]);
+				sensor_states[src_addr] = (uint8_t) CONNECTED;
+			}
+		} else if (sensor_states[src_addr] == CONNECTED) {
+			pc.printf("CONNECTED");
+			process_rf_input();
+		}
+	} else {
+		pc.printf("src_addr out of range\r\n");
+	}
+}
+/* Main sending loop. */
 int main() {
-    t.start();
-    set_time(0);
-    node* speed_sentinel = new node;
-    speed_sentinel->next = speed_sentinel;
-    speed_sentinel->prev = speed_sentinel;
-    speed_sentinel->len = 0;
-    node* cad_sentinel = new node;
-    cad_sentinel->next = cad_sentinel;
-    cad_sentinel->prev = cad_sentinel;
-    cad_sentinel->len = 0;
-    char send_data[202];
-    bool braking;
-    float raw_gear; //int?
-    int gear_val;
-    float last_time = t.read();
-    current_time = t.read();
-    float cadence_val;
-    float speed_val;
-    float distance = 0;
-    float distance_const = -1;
-    while(1) {
-        current_time = t.read();
-        braking = brake(BrakeSensor.read());
-        cadence_val = cadence(CadenceSensor.read(),cad_sentinel);
-        speed_val = speed(SpeedSensor.read(),speed_sentinel);
-        raw_gear = GearSensor.read();
-        gear_val = gear(raw_gear);
-        distance += speed_val * (current_time-last_time) * distance_const;
-        
-        //XBee Transmission
-        sprintf(send_data,"c%f\n", cadence_val);
-        xbee1.SendData(send_data);
-        sprintf(send_data,"s%f\n", speed_val);
-        xbee1.SendData(send_data);
-        sprintf(send_data,"g%i\n",gear_val);
-        xbee1.SendData(send_data);
-        sprintf(send_data,"b%d\n",braking);
-        xbee1.SendData(send_data);
-        
-        //write to LCD screen
-        //if (t.read() > last_time + min_time_update){
-            //format of the screen is
-            //cadence          dist
-            //______________________
-            //|GEAR         CADENCE|
-            //| XX            XXX  |
-            //|        TIME        |
-            //|       XXX:XX       |
-            //|---------------------
-            //gear              time
-            lcd.cls();
-            std::ostringstream format_data;
-            format_data << "GEAR         CADENCE";
-            //line 2
-            format_data << " ";
-            format_data.width(2);
-            format_data << gear_val;
-            format_data << "            ";
-            format_data.width(3);
-            format_data << cadence_val;
-            format_data << "  ";
-            //third line
-            format_data << "        TIME        ";
-            //fourth line
-            format_data << "       ";
-            int minutes = (int)last_time/60;
-            format_data.width(3);
-            format_data << minutes;
-            format_data << ":";
-            int seconds = ((int)last_time) % 60;
-            format_data.width(2);
-            format_data << seconds;
-            format_data << "       ";
-            lcd.printf(format_data.str().c_str());
-        //}
-        last_time = current_time;
-    }
+	init();
+	pc.printf("Starting Logging.\n");
+	//events.attach(&send_xbee_speed, XBEE_SEND_INTERVAL);
+	//events.attach(&show_usbterm_speed, PC_SEND_INTERVAL);
+	while(1) {
+		if (rf24.readable(NRF24L01P_PIPE_P0)) {
+			led1 = 1;
+			pc.printf("rf24 connection.\r\n");
+			rf24.read(NRF24L01P_PIPE_P0, receive_buffer, RF24_TRANSFER_SIZE);
+			pc.printf(receive_buffer);
+			pc.printf("\r\n");
+			process_connection();
+		} else if (rf24.readable(NRF24L01P_PIPE_P2)) {
+			led1 = 1;
+			pc.printf("rf24 pipe2.\r\n");
+			rf24.read(NRF24L01P_PIPE_P2, receive_buffer, RF24_TRANSFER_SIZE);
+			process_rf_input();
+		} else if (rf24.readable(NRF24L01P_PIPE_P3)) {
+			led3 = 1;
+			pc.printf("rf24 pipe3.\r\n");
+			rf24.read(NRF24L01P_PIPE_P3, receive_buffer, RF24_TRANSFER_SIZE);
+			process_rf_input();
+		} else if (rf24.readable(NRF24L01P_PIPE_P4)) {
+			led1 = 1;
+			pc.printf("rf24 pipe4.\r\n");
+			rf24.read(NRF24L01P_PIPE_P4, receive_buffer, RF24_TRANSFER_SIZE);
+			process_rf_input();
+		} else if (rf24.readable(NRF24L01P_PIPE_P5)) {
+			led1 = 1;
+			pc.printf("rf24 pipe5.\r\n");
+			rf24.read(NRF24L01P_PIPE_P5, receive_buffer, RF24_TRANSFER_SIZE);
+			process_rf_input();
+		}
+	}
 }
+
+/* Gets the id from the name of the sensor. */
+uint8_t find_id(char *name) {
+	uint8_t id = 0;
+	while (strcmp(sensor_names[id], name)) {
+		id += 1;
+	}
+	return id;
+}
+
+/* Send to a sensor with name.
+ * Sending format: [dest_address(1), src_address(1), data(30)]
+ */
+void send_sensor_name(char *name, char *data) {
+	uint8_t id = find_id(name);
+	send_sensor(id, data);
+}
+
+/* RF24 Handlers. They must all take in a char* parameter. */
+
+/* Gets the seqno from the data packet. */
+unsigned int get_seqno(char *data) {
+	uint8_t msb = (uint8_t) data[0];
+	uint8_t lsb = (uint8_t) data[1];
+	unsigned int seqno = msb * 255 + lsb;
+	return seqno;
+}
+
+/* Sends an ack to the relevant sensors. */
+void send_ack(int id, unsigned int seqno, char *data) {
+	uint8_t msb = (uint8_t) seqno >> 8;
+	uint8_t lsb = (uint8_t) seqno & 0x0F;
+	char *send_data = (char *) malloc(RF24_TRANSFER_SIZE - 2);
+	send_data[0] = msb;
+	send_data[1] = lsb;
+	sprintf(send_data + 2, "%s", data);
+	send_sensor(id, send_data);
+}
+
+/* The receiver's handler should never really do anything.
+ * If the receiver gets a message from itself, something went wrong.
+ */
+void receiver_handler(char *data) {
+	led4 = 1; //We really shouldn't be doing anything. This is to warn us if this handler is ever triggered.
+}
+
+/* Get speed from data packet. */
+double get_speed(char *data) {
+	double spd;
+	sscanf(data, "%lf", &spd);
+	return spd;
+}
+
+/* Speed handler
+ * Receive data in the format [seqno(2), speed(8)]
+ * speed is a double.
+ */
+unsigned int speed_seqno = 0;
+char *spd_string = (char *) malloc(8);
+void speed_handler(char *data) {
+	pc.printf("speed\r\n");
+/*	unsigned int seqno = get_seqno(data);
+	if (seqno > speed_seqno) {
+		speed = get_speed(data); //should we update anything?
+		sprintf(spd_string, "%3.4f", speed);
+		send_ack(1, speed_seqno, spd_string);
+	} else if (seqno == 0) {
+		send_ack(1, 0, (char *) "ack");
+		if (speed_seqno > 0) {
+			send_ack(1, speed_seqno, spd_string);
+		}
+	}*/
+}
+
+/* Get cadence from data packet. */
+double get_cadence(char *data) {
+	double cad;
+	sscanf(data, "%lf", &cad);
+	return cad;
+}
+
+/* Cadence handler
+ * Receive data in the format [seqno(2), cadence(8)]
+ * cadence is a double
+ */
+unsigned int cadence_seqno = 0;
+char *cad_string = (char *) malloc(8);
+void cadence_handler(char *data) {
+	pc.printf("cadence\r\n");
+/*	unsigned int seqno = get_seqno(data);
+	if (seqno > cadence_seqno) {
+		cadence = get_cadence(data);
+		sprintf(cad_string, "%3.4f", cadence);
+		send_ack(2, cadence_seqno, cad_string);
+	} else if (seqno == 0) {
+		send_ack(2, 0, (char *) "ack");
+		if (cadence_seqno > 0) {
+			send_ack(2, cadence_seqno, cad_string);
+		}
+	}*/
+}
+
+/* Rear Light handler
+ */
+void rear_lights_handler(char *data) {
+	pc.printf("rear_lights\r\n");
+}
+
+/* Front Light handler
+ * Not sure what goes here yet. Probably messages like battery, change of status, etc
+ */
+void front_lights_handler(char *data) {
+	pc.printf("front_lights\r\n");
+}
+
+/* Shifter handler
+ * not sure what goes here yet. Probably messages like battery, change of status, etc
+ */
+void shifter_handler(char *data) {
+}
+
