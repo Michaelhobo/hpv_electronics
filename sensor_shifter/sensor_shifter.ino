@@ -13,7 +13,7 @@ int serial_console_putc(char c, FILE *) {
 	Serial.write(c);
 	return 0;
 }
-
+yes
 uint8_t state; //state that the sensor is in. 0 = connected, 1 = connected, 2 = sleep
 char *name = "template";
 uint64_t master_general_address = ((MY_ADDR % 4) + 2) & 0x00F0F0F0F0; //master will read on this address
@@ -37,11 +37,6 @@ void setup() {
 	/* For debugging, comment out when not needed. */
 	fdevopen(&serial_console_putc, NULL);
 	rf24.printDetails();
-
-	/*if (!connect_master()) {
-		shutdown();
-		}*/
-	//rf24.openWritingPipe(my_pipe);
 }
 
 
@@ -108,6 +103,7 @@ void write_data() {
 }
 /* Shut down this sensor. */
 void shutdown() {
+	
 	//power down antenna, set all unused pins low, put microcontroller to sleep for 1/2(?) second then wake up
 }
 
