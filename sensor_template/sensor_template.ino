@@ -4,6 +4,7 @@
 #include "RF24.h"
 #include "println.h"
 #include "constants.h"
+#include "LowPower.h"
 
 #define MY_ADDR 1
 RF24 rf24(8,7); //change to 7,8 because 9,10 are pwm pins
@@ -103,7 +104,7 @@ void write_data() {
 }
 /* Shut down this sensor. */
 void shutdown() {
-	
+	LowPower.powerDown(SLEEP_2S, ADC_CONTROL_OFF, BOD_OFF);
 	//power down antenna, set all unused pins low, put microcontroller to sleep for 1/2(?) second then wake up
 }
 
