@@ -97,6 +97,7 @@ void init() {
 	pc.printf("init");
 	telemetry_init();
 	rf24_init();
+	//lcd.putc('0');
 }
 
 /* Send to a sensor with an id. */
@@ -236,7 +237,7 @@ double get_speed(char *data) {
 unsigned int speed_seqno = 0;
 char *spd_string = (char *) malloc(8);
 void speed_handler(char *data) {
-	led3 = 1;
+	pc.printf("speed\r\n");
 /*	unsigned int seqno = get_seqno(data);
 	if (seqno > speed_seqno) {
 		speed = get_speed(data); //should we update anything?
@@ -264,7 +265,8 @@ double get_cadence(char *data) {
 unsigned int cadence_seqno = 0;
 char *cad_string = (char *) malloc(8);
 void cadence_handler(char *data) {
-	unsigned int seqno = get_seqno(data);
+	pc.printf("cadence\r\n");
+/*	unsigned int seqno = get_seqno(data);
 	if (seqno > cadence_seqno) {
 		cadence = get_cadence(data);
 		sprintf(cad_string, "%3.4f", cadence);
@@ -274,18 +276,20 @@ void cadence_handler(char *data) {
 		if (cadence_seqno > 0) {
 			send_ack(2, cadence_seqno, cad_string);
 		}
-	}
+	}*/
 }
 
 /* Rear Light handler
  */
 void rear_lights_handler(char *data) {
+	pc.printf("rear_lights\r\n");
 }
 
 /* Front Light handler
  * Not sure what goes here yet. Probably messages like battery, change of status, etc
  */
 void front_lights_handler(char *data) {
+	pc.printf("front_lights\r\n");
 }
 
 /* Shifter handler
