@@ -119,7 +119,7 @@ void write_data() {
   rf24.stopListening();
   bool received = false;
   while (!received) {
-    received = rf24.write("ten", sizeof(char) * 10);
+    received = rf24.write(write_buffer, sizeof(char) * 10);
     if (received) {
       Serial.println("write ok...\n\r"); 
     } 
