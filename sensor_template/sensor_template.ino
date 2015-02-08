@@ -108,8 +108,7 @@ void shutdown() {
  * just shut down the rf24 chip and other unnecessary powered devices.
  */
 void sleep() {
-	delay(1000); //for now
-	//LowPower.idle();
+	LowPower.idle(SLEEP_1S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF, USART0_OFF, TWI_OFF);
 }
 
 /* Put the master into deep sleep.
