@@ -5,12 +5,10 @@
 #include "println.h"
 #include "constants.h"
 
-#define MY_ADDR 1
-<<<<<<< HEAD
-RF24 rf24(9, 10);
-=======
+#define MY_ADDR 2
+
 RF24 rf24(8,7); //change to 7,8 because 9,10 are pwm pins
->>>>>>> rf24
+
 
 /* For serial debugging. */
 int serial_console_putc(char c, FILE *) {
@@ -22,11 +20,21 @@ int count = 0;
 int backup = 0;
 int backup2 = 0;
 double currentRPM = 0.0;
+char* convertedString = (char*) malloc(4);
+char* print_str = (char*) malloc(100);
 const int TIMEINTERVAL = 10; //Seconds
 void addCount()
-{
+{      
+        Serial.println(count, DEC);
 	count++;
 }
+
+void convertDoubleToString(double rpm){
+        int first = (int) rpm;
+        int last = (rpm-first)*10;
+        sprintf(convertedString, "%d.%d", first, last);
+}
+
 uint8_t state; //state that the sensor is in. 0 = connected, 1 = connected, 2 = sleep
 char *name = "template";
 uint64_t master_general_address = ((MY_ADDR % 4) + 2) & 0x00F0F0F0F0; //master will read on this address
@@ -41,7 +49,7 @@ void setup() {
 	write_buffer[0] = MY_ADDR;
 	w_data = (char *) (write_buffer + 1);
 	rf24.begin();
-	attachInterrupt(1, addCount, INPUT);
+	attachInterrupt(1, addCount, RISING);
 	rf24.setDataRate(RF24_1MBPS);
 	rf24.setCRCLength(RF24_CRC_8);
 	rf24.setPayloadSize(RF24_TRANSFER_SIZE);
@@ -102,7 +110,12 @@ bool connect_master() {
  */
 void write_data() {
 	/* Write code here. */
-	sprintf(write_buffer, "%2.1f", currentRPM);
+	convertDoubleToString(currentRPM);
+
+	sprintf(w_data, "%s", convertedString);
+        
+        sprintf(print_str, "w_data %s, %s, %s\r\n", w_data, convertedString, write_buffer);
+        Serial.println(print_str);
 	rf24.stopListening();
 	bool received = false;
 	while (!received) {

@@ -20,18 +20,27 @@ uint64_t master_connection_address = 0x00F0F0F0F1; //this is the address we writ
 char read_buffer[RF24_TRANSFER_SIZE];
 char write_buffer[RF24_TRANSFER_SIZE];
 char *w_data;
+char* print_str = (char*) malloc(100);
+char* convertedString = (char*) malloc(4);
 /* Run setup code. */
 
 //const double PI = 
-const int SPOKES = 32;
+const int SPOKES = 20;
 const double CIRCUMFERENCEOFWHEEL = 2.096/1609;
-int toTurnOnPin = 0;
+//int toTurnOnPin = 0;
 bool on = false;
 int ticks = 0;
 double mph = 0.0;
 
+void convertDoubleToString(double miles){
+        int first = (int) miles;
+        int last = (miles-first)*10;
+        sprintf(convertedString, "%d.%d", first, last);
+}
+
 void addTick(){
 	ticks++;
+        Serial.println(ticks, DEC);
 }
 
 
@@ -47,8 +56,8 @@ void setup() {
 	rf24.setChannel(101);
 	rf24.setAutoAck(true);
 
-	attachInterrupt(1, addTick, INPUT);
-	pinMode(toTurnOnPin, OUTPUT);
+	attachInterrupt(1, addTick, FALLING);
+	//pinMode(toTurnOnPin, OUTPUT);
 	/* For debugging, comment out when not needed. */
 	fdevopen(&serial_console_putc, NULL);
 	rf24.printDetails();
@@ -92,11 +101,15 @@ bool connect_master() {
 
 void write_data() {
 	/* Write code here. */
-	sprintf(write_buffer, "%2.1f", mph);
+        convertDoubleToString(mph);
+	sprintf(w_data, "%s", convertedString);
+        
+        sprintf(print_str, "w_data %s, %s, %s\r\n", w_data, convertedString, write_buffer);
+        Serial.println(print_str);
 	rf24.stopListening();
 	bool received = false;
 	while (!received) {
-		received = rf24.write("ten", sizeof(char) * 10);
+		received = rf24.write(write_buffer, sizeof(char) * 10);
 		if (received) {
 			Serial.println("write ok...\n\r"); 
 		} 
