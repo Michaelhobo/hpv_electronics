@@ -5,6 +5,7 @@
 #include "println.h"
 #include "constants.h"
 #include "LowPower.h"
+#include <avr/io.h>
 
 #define MY_ADDR 1
 RF24 rf24(8,7); //change to 7,8 because 9,10 are pwm pins
@@ -14,7 +15,7 @@ int serial_console_putc(char c, FILE *) {
 	Serial.write(c);
 	return 0;
 }
-yes
+
 uint8_t state; //state that the sensor is in. 0 = connected, 1 = connected, 2 = sleep
 char *name = "template";
 uint64_t master_general_address = ((MY_ADDR % 4) + 2) & 0x00F0F0F0F0; //master will read on this address
@@ -22,17 +23,25 @@ uint64_t master_connection_address = 0x00F0F0F0F1; //this is the address we writ
 char read_buffer[RF24_TRANSFER_SIZE];
 char write_buffer[RF24_TRANSFER_SIZE];
 char *w_data;
+uint8_t disconnected_count = 0;
 
 /* Power Saving code.
  * Pull down all unused (floating) pins, set pull-up resistors, etc.
  */
 void powerSetup() {
+	DDRD = DDRD | B11111100
+		
 	//Write Code Here!
+}
+
+/* Prints only if debug is true. */
+void prt(const char* msg) {
+	Serial.println(msg);
 }
 
 /* Run setup code. */
 void setup() {
-	Serial.begin(9600); //This allows serial output to a connected serial terminal.
+	if (debug) Serial.begin(9600); //This allows serial output to a connected serial terminal.
 	state = DISCONNECTED;
 
 	// RF24 Setup
@@ -55,12 +64,9 @@ void setup() {
 
 /* Connect this sensor to the master. */
 bool connect_master() {
-	Serial.print("connecting master...");
-	Serial.flush();
+	prt("connecting master...");
 	char *start_msg = (char *) malloc(RF24_TRANSFER_SIZE);
 	sprintf(start_msg, "%c%s", MY_ADDR, "connect");
-	Serial.print("saved start message");
-	Serial.flush();
 	rf24.openWritingPipe(master_connection_address);
 	//rf24.openWritingPipe(0x00F0F0F0F0);
 	//rf24.openReadingPipe(1, 0xF0F0F0F0D2);
@@ -70,28 +76,15 @@ bool connect_master() {
 		rf24.stopListening();
 		connected = rf24.write( start_msg,sizeof(char)*10);
 		if (connected) {
-			Serial.println("connect ok...\n\r"); 
+			prt("connect ok...\n\r"); 
 		} else  {
-			Serial.println("connect failed.\n\r");
+			prt("connect failed.\n\r");
 		}
 		delay(100);
-		/*bool connected = rf24.write(start_msg, sizeof(char) * RF24_TRANSFER_SIZE);
-			if (!connected) {
-			if (timeout > 1000) {
-			free(start_msg);
-			Serial.println("failed.");
-			return false;
-			}
-			delay(timeout);
-
-			timeout += 100;
-			Serial.print("failed...");
-			}*/
 		rf24.startListening();
 
 	}
 	free(start_msg);
-	Serial.println("done.");
 	return true;
 }
 
@@ -99,7 +92,10 @@ bool connect_master() {
  * This should be called when a message to shut down is called.
  */
 void shutdown() {
-	LowPower.powerDown(SLEEP_2S, ADC_CONTROL_OFF, BOD_OFF);
+	rf24.powerDown();
+	LowPower.powerDown(SLEEP_8S, ADC_CONTROL_OFF, BOD_OFF);
+	rf24.powerUp();
+	rf24.startListening();
 	//power down antenna, set all unused pins low, put microcontroller to sleep for 1/2(?) second then wake up
 }
 
@@ -108,15 +104,20 @@ void shutdown() {
  * just shut down the rf24 chip and other unnecessary powered devices.
  */
 void sleep() {
+	r24.powerDown();
 	LowPower.idle(SLEEP_1S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF, USART0_OFF, TWI_OFF);
+	rf24.powerUp();
+	rf24.startListening();
 }
 
 /* Put the master into deep sleep.
  * This should be used for very long sleep periods, when a disconnect may have happened.
  */
 void deep_sleep() {
-	delay(10000); //for now
-	//LowPower.powerDown(SLEEP_2S, ADC_CONTROL_OFF, BOD_OFF);
+	rf24.powerDown();
+	LowPower.powerDown(SLEEP_4S, ADC_CONTROL_OFF, BOD_OFF);
+	rf24.powerUp();
+	rf24.startListening();
 }
 
 /* Writes data to master
@@ -131,9 +132,9 @@ void write_data() {
 	while (!received) {
 		received = rf24.write(write_buffer, sizeof(char) * 10);
 		if (received) {
-			Serial.println("write ok...\n\r"); 
+			prt("write ok...\n\r"); 
 		} else  {
-			Serial.println("write failed.\n\r");
+			prt("write failed.\n\r");
 		}
 		delay(100);
 		rf24.startListening();
@@ -163,36 +164,40 @@ void read_data() {
 }
 void loop() {
 	// put your main code here, to run repeatedly
-	Serial.println("looping...");
+	prt("looping...");
 	if (state == DISCONNECTED) {
-		Serial.println("Disconnected");
+		prt("Disconnected");
 		if (!connect_master()) {
 			state = SLEEP;
-			Serial.println("failed to connect");
+			prt("failed to connect");
 		} else {
 			state = CONNECTED;
 		}
 	} else if (state == CONNECTED) {
-		Serial.println("Connected");
+		prt("Connected");
 		read_data();
 		write_data();
-		delay(1000);
+		sleep();
 	} else if (state == SLEEP) {
-		Serial.println("Sleep");
-		delay(1000);
+		prt("Sleep");
 		if (connect_master()) {
 			state = CONNECTED;
-		} else {
-			Serial.println("failed to connect");
-			//should it wake up?
+			disconnected_count = 0;
+		} else if (disconnected_count < 10) {
+			prt("failed to connect");
+			disconnected_count += 1;
 			sleep();
+		} else {
+			state = DEEP_SLEEP;
 		}
 	} else if (state == DEEP_SLEEP) {
-		Serial.println("Deep Sleep");
+		prt("Deep Sleep");
 		if (connect_master()) {
 			state = CONNECTED;
+			disconnected_count = 0;
 		} else {
-			Serial.println("failed to connect");
+			prt("failed to connect");
+			disconnected_count += 1;
 			deep_sleep();
 		}
 	}
