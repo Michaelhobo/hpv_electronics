@@ -20,7 +20,7 @@ DigitalOut led4(LED4);
 Serial pc(USBTX, USBRX); // tx, rx
 xbee xbee(p13, p14, p12);
 nRF24L01P rf24(p5, p6, p7, p8, p9, p10);
-TextLCD lcd(p26, p25, p24, p23, p22, p21); // rs, e, d4-d7
+TextLCD lcd(p21, p22, p23, p24, p25, p26); // rs, e, d4-d7
 
 Ticker events;
 Timeout timeout;
@@ -138,9 +138,46 @@ void process_rf_input() {
 	led2 = 1;
 	if (sensor_handlers[src_addr]){
 		sensor_handlers[src_addr](receive_buffer + 1);
-		/*update lcd display after receiving and sending data to handler
-
-		*/
+		//update lcd display after receiving and sending data to handler
+		//write to LCD screen
+        //if (t.read() > last_time + min_time_update){
+            //format of the screen is
+            //cadence          dist
+            //______________________
+            //|GEAR         CADENCE|
+            //| XX            XXX  |
+            //|SPEED       TIME    |
+            //| XX        XXX:XX   |
+            //|---------------------
+            //gear              time
+            lcd.cls();
+						int last_time = 60;//FOR NOW
+            std::ostringstream format_data;
+            format_data << "GEAR         CADENCE";
+            //line 2
+            format_data << " ";
+            format_data.width(2);
+            format_data << gear_val;
+            format_data << "            ";
+            format_data.width(3);
+            format_data << cadence;
+            format_data << "  ";
+            //third line
+            format_data << "SPEED       TIME    ";
+            //fourth line
+            format_data << " ";
+            format_data.width(2);
+            format_data << speed;
+            format_data << "        ";
+            int minutes = (int)last_time/60;
+            format_data.width(3);
+            format_data << minutes;
+            format_data << ":";
+            int seconds = ((int)last_time) % 60;
+            format_data.width(2);
+            format_data << seconds;
+            format_data << "   ";
+            lcd.printf(format_data.str().c_str());
 	}
 }
 
@@ -176,42 +213,7 @@ int main() {
 			rf24.read(NRF24L01P_PIPE_P5, receive_buffer, RF24_TRANSFER_SIZE);
 			process_rf_input();
 		}
-		//write to LCD screen
-        //if (t.read() > last_time + min_time_update){
-            //format of the screen is
-            //cadence          dist
-            //______________________
-            //|GEAR         CADENCE|
-            //| XX            XXX  |
-            //|        TIME        |
-            //|       XXX:XX       |
-            //|---------------------
-            //gear              time
-            lcd.cls();
-						int last_time = 60;//FOR NOW
-            std::ostringstream format_data;
-            format_data << "GEAR         CADENCE";
-            //line 2
-            format_data << " ";
-            format_data.width(2);
-            format_data << gear_val;
-            format_data << "            ";
-            format_data.width(3);
-            format_data << cadence;
-            format_data << "  ";
-            //third line
-            format_data << "        TIME        ";
-            //fourth line
-            format_data << "       ";
-            int minutes = (int)last_time/60;
-            format_data.width(3);
-            format_data << minutes;
-            format_data << ":";
-            int seconds = ((int)last_time) % 60;
-            format_data.width(2);
-            format_data << seconds;
-            format_data << "       ";
-            lcd.printf(format_data.str().c_str());
+		
 	}
 }
 
