@@ -138,6 +138,9 @@ void process_rf_input() {
 	led2 = 1;
 	if (sensor_handlers[src_addr]){
 		sensor_handlers[src_addr](receive_buffer + 1);
+		/*update lcd display after receiving and sending data to handler
+
+		*/
 	}
 }
 
@@ -209,7 +212,6 @@ int main() {
             format_data << seconds;
             format_data << "       ";
             lcd.printf(format_data.str().c_str());
-            x=1;
 	}
 }
 
