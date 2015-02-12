@@ -28,7 +28,7 @@ TextLCD::TextLCD(PinName rs, PinName e, PinName d0, PinName d1,
                  PinName d2, PinName d3, LCDType type) : _rs(rs),
         _e(e), _d(d0, d1, d2, d3),
         _type(type) {
-    _type = LCD20x4;
+/*    _type = LCD20x4;
 
     _e  = 1;
     _rs = 0;            // command mode
@@ -46,28 +46,28 @@ TextLCD::TextLCD(PinName rs, PinName e, PinName d0, PinName d1,
     writeCommand(0x28); // Function set 001 BW N F - -
     writeCommand(0x0C);
     writeCommand(0x6);  // Cursor Direction and Display Shift : 0000 01 CD S (CD 0-left, 1-right S(hift) 0-no, 1-yes
-    cls();
+    cls();*/
 }
 
 void TextLCD::character(int column, int row, int c) {
-    int a = address(column, row);
+/*    int a = address(column, row);
     writeCommand(a);
-    writeData(c);
+    writeData(c);*/
 }
 
 void TextLCD::cls() {
-    writeCommand(0x01); // cls, and set cursor to 0
+/*    writeCommand(0x01); // cls, and set cursor to 0
     wait(0.00164f);     // This command takes 1.64 ms
-    locate(0, 0);
+    locate(0, 0);*/
 }
 
 void TextLCD::locate(int column, int row) {
-    _column = column;
-    _row = row;
+//    _column = column;
+//    _row = row;
 }
 
 int TextLCD::_putc(int value) {
-    if (value == '\n') {
+/*    if (value == '\n') {
         _column = 0;
         _row++;
         if (_row >= rows()) {
@@ -84,7 +84,8 @@ int TextLCD::_putc(int value) {
             }
         }
     }
-    return value;
+    return value;*/
+	return 0;
 }
 
 int TextLCD::_getc() {
@@ -92,7 +93,7 @@ int TextLCD::_getc() {
 }
 
 void TextLCD::writeByte(int value) {
-    _d = value >> 4;
+/*    _d = value >> 4;
     wait(0.000040f); // most instructions take 40us
     _e = 0;
     wait(0.000040f);
@@ -101,21 +102,21 @@ void TextLCD::writeByte(int value) {
     wait(0.000040f);
     _e = 0;
     wait(0.000040f);  // most instructions take 40us
-    _e = 1;
+    _e = 1;*/
 }
 
 void TextLCD::writeCommand(int command) {
-    _rs = 0;
-    writeByte(command);
+//    _rs = 0;
+//    writeByte(command);
 }
 
 void TextLCD::writeData(int data) {
-    _rs = 1;
-    writeByte(data);
+//    _rs = 1;
+//    writeByte(data);
 }
 
 int TextLCD::address(int column, int row) {
-    switch (_type) {
+/*    switch (_type) {
         case LCD20x4:
             switch (row) {
                 case 0:
@@ -133,11 +134,12 @@ int TextLCD::address(int column, int row) {
         case LCD20x2:
         default:
             return 0x80 + (row * 0x40) + column;
-    }
+    }*/
+	return 0;
 }
 
 int TextLCD::columns() {
-    switch (_type) {
+/*    switch (_type) {
         case LCD20x4:
         case LCD20x2:
             return 20;
@@ -145,11 +147,12 @@ int TextLCD::columns() {
         case LCD16x2B:
         default:
             return 16;
-    }
+    }*/
+	return 0;
 }
 
 int TextLCD::rows() {
-    switch (_type) {
+/*    switch (_type) {
         case LCD20x4:
             return 4;
         case LCD16x2:
@@ -157,5 +160,6 @@ int TextLCD::rows() {
         case LCD20x2:
         default:
             return 2;
-    }
+    }*/
+	return 0;
 }

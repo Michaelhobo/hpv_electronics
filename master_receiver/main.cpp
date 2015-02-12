@@ -151,8 +151,9 @@ void process_rf_input() {
             //|---------------------
             //gear              time
             lcd.cls();
-						int last_time = 60;//FOR NOW
-            std::ostringstream format_data;
+						lcd.character(0, 0, 10);
+						//int last_time = 60;//FOR NOW
+            /*std::ostringstream format_data;
             format_data << "GEAR         CADENCE";
             //line 2
             format_data << " ";
@@ -177,7 +178,7 @@ void process_rf_input() {
             format_data.width(2);
             format_data << seconds;
             format_data << "   ";
-            lcd.printf(format_data.str().c_str());
+            lcd.printf(format_data.str().c_str());*/
 	}
 }
 

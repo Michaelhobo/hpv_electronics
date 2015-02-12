@@ -40,7 +40,7 @@
  * }
  * @endcode
  */
-class TextLCD : public Stream {
+class TextLCD {// : public Stream {
 public:
 
     /** LCD panel format */
