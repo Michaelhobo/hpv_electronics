@@ -28,13 +28,19 @@ char *w_data;
 //const double PI = 
 const int SPOKES = 32;
 const double CIRCUMFERENCEOFWHEEL = 2.096/1609;
-int toTurnOnPin = 0;
-bool on = false;
+//int toTurnOnPin = 0;
 int ticks = 0;
 double mph = 0.0;
+boolean debounce = false;
 
 void addTick(){
+  if (debounce) {
+      return;
+  }
+  debounce = true;
   ticks++;
+  delay(2)
+  debounce = false;
 }
 
 
@@ -50,8 +56,7 @@ void setup() {
   rf24.setChannel(101);
   rf24.setAutoAck(true);
 
-  attachInterrupt(1, addTick, INPUT);
-  pinMode(toTurnOnPin, OUTPUT);
+  attachInterrupt(1, addTick, RISING);
   /* For debugging, comment out when not needed. */
   fdevopen(&serial_console_putc, NULL);
   rf24.printDetails();
