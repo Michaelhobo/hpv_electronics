@@ -24,13 +24,16 @@ char read_buffer[RF24_TRANSFER_SIZE];
 char write_buffer[RF24_TRANSFER_SIZE];
 char *w_data;
 uint8_t disconnected_count = 0;
+bool debug = true;
 
 /* Power Saving code.
  * Pull down all unused (floating) pins, set pull-up resistors, etc.
  */
 void powerSetup() {
-	DDRD = DDRD | B11111100
-		
+	DDRD &= B00000011;       // set Arduino pins 2 to 7 as inputs, leaves 0 & 1 (RX & TX) as is
+	DDRB = B00000000;        // set pins 8 to 13 as inputs
+	PORTD |= B11111100;      // enable pullups on pins 2 to 7, leave pins 0 and 1 alone
+	PORTB |= B11111111;      // enable pullups on pins 8 to 13	
 	//Write Code Here!
 }
 
@@ -68,8 +71,6 @@ bool connect_master() {
 	char *start_msg = (char *) malloc(RF24_TRANSFER_SIZE);
 	sprintf(start_msg, "%c%s", MY_ADDR, "connect");
 	rf24.openWritingPipe(master_connection_address);
-	//rf24.openWritingPipe(0x00F0F0F0F0);
-	//rf24.openReadingPipe(1, 0xF0F0F0F0D2);
 	bool connected = false;
 	int timeout = 100; //timeout in ms;
 	while (!connected) {
@@ -93,10 +94,9 @@ bool connect_master() {
  */
 void shutdown() {
 	rf24.powerDown();
-	LowPower.powerDown(SLEEP_8S, ADC_CONTROL_OFF, BOD_OFF);
+	LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
 	rf24.powerUp();
 	rf24.startListening();
-	//power down antenna, set all unused pins low, put microcontroller to sleep for 1/2(?) second then wake up
 }
 
 /* Put the master to sleep.
@@ -104,7 +104,7 @@ void shutdown() {
  * just shut down the rf24 chip and other unnecessary powered devices.
  */
 void sleep() {
-	r24.powerDown();
+	rf24.powerDown();
 	LowPower.idle(SLEEP_1S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF, USART0_OFF, TWI_OFF);
 	rf24.powerUp();
 	rf24.startListening();
@@ -115,7 +115,7 @@ void sleep() {
  */
 void deep_sleep() {
 	rf24.powerDown();
-	LowPower.powerDown(SLEEP_4S, ADC_CONTROL_OFF, BOD_OFF);
+	LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
 	rf24.powerUp();
 	rf24.startListening();
 }
