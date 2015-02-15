@@ -3,10 +3,15 @@
 #include <stdio.h>
 #include "xbee.h"
 #include "nRF24L01P.h"
+<<<<<<< HEAD
 #include "TextLCD.h"
 #include "constants/constants.h"
 #include <string>
 #include <sstream>
+=======
+#include "../constants.h"
+#include "TextLCD.h"
+>>>>>>> rf24
 
 using namespace std;
 #define XBEE_SEND_INTERVAL 2
@@ -20,7 +25,11 @@ DigitalOut led4(LED4);
 Serial pc(USBTX, USBRX); // tx, rx
 xbee xbee(p13, p14, p12);
 nRF24L01P rf24(p5, p6, p7, p8, p9, p10);
+<<<<<<< HEAD
 TextLCD lcd(p21, p22, p23, p24, p25, p26); // rs, e, d4-d7
+=======
+TextLCD lcd(p15, p16, p17, p18, p19, p20, TextLCD::LCD20x4); // rs, e, d4-d7
+>>>>>>> rf24
 
 Ticker events;
 Timeout timeout;	
@@ -108,6 +117,7 @@ void init() {
 	pc.printf("init");
 	telemetry_init();
 	rf24_init();
+	lcd.putc('0');
 }
 
 /* Send to a sensor with an id. */
