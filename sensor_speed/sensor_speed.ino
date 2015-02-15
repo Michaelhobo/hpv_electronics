@@ -31,6 +31,7 @@ const double CIRCUMFERENCEOFWHEEL = 2.096/1609;
 bool on = false;
 int ticks = 0;
 double mph = 0.0;
+boolean debounce = false;
 
 void convertDoubleToString(double miles){
         int first = (int) miles;
@@ -39,12 +40,35 @@ void convertDoubleToString(double miles){
 }
 
 void addTick(){
+
 	ticks++;
         Serial.println(ticks, DEC);
 }
 
 
 void setup() {
+
+  Serial.begin(9600);
+  state = DISCONNECTED;
+  write_buffer[0] = MY_ADDR;
+  w_data = (char *) (write_buffer + 1);
+  rf24.begin();
+  rf24.setDataRate(RF24_1MBPS);
+  rf24.setCRCLength(RF24_CRC_8);
+  rf24.setPayloadSize(RF24_TRANSFER_SIZE);
+  rf24.setChannel(101);
+  rf24.setAutoAck(true);
+
+  attachInterrupt(1, addTick, RISING);
+  /* For debugging, comment out when not needed. */
+  fdevopen(&serial_console_putc, NULL);
+  rf24.printDetails();
+
+  /*if (!connect_master()) {
+   		shutdown();
+   		}*/
+  //rf24.openWritingPipe(my_pipe);
+
 	Serial.begin(9600);
 	state = DISCONNECTED;
 	write_buffer[0] = MY_ADDR;
@@ -57,10 +81,11 @@ void setup() {
 	rf24.setAutoAck(true);
 
 	attachInterrupt(1, addTick, FALLING);
-	//pinMode(toTurnOnPin, OUTPUT);
+	attachInterrupt(1, addTick, INPUT);
 	/* For debugging, comment out when not needed. */
 	fdevopen(&serial_console_putc, NULL);
 	rf24.printDetails();
+
 }
 
 
@@ -100,6 +125,25 @@ bool connect_master() {
  */
 
 void write_data() {
+
+  /* Write code here. */
+ 
+  sprintf(write_buffer, "%2.1f", mph);
+  
+  rf24.stopListening();
+  bool received = false;
+  while (!received) {
+    received = rf24.write(write_buffer, sizeof(char) * 10);
+    if (received) {
+      Serial.println("write ok...\n\r"); 
+    } 
+    else  {
+      Serial.println("write failed.\n\r");
+    }
+    delay(100);
+    rf24.startListening();
+  }
+
 	/* Write code here. */
         convertDoubleToString(mph);
 	sprintf(w_data, "%s", convertedString);
@@ -107,7 +151,7 @@ void write_data() {
         sprintf(print_str, "w_data %s, %s, %s\r\n", w_data, convertedString, write_buffer);
         Serial.println(print_str);
 	rf24.stopListening();
-	bool received = false;
+	received = false;
 	while (!received) {
 		received = rf24.write(write_buffer, sizeof(char) * 10);
 		if (received) {
@@ -119,6 +163,7 @@ void write_data() {
 		delay(100);
 		rf24.startListening();
 	}
+
 }
 /* Shut down this sensor. */
 void shutdown() {

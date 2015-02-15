@@ -13,7 +13,7 @@ int serial_console_putc(char c, FILE *) {
 	Serial.write(c);
 	return 0;
 }
-yes
+
 uint8_t state; //state that the sensor is in. 0 = connected, 1 = connected, 2 = sleep
 char *name = "template";
 uint64_t master_general_address = ((MY_ADDR % 4) + 2) & 0x00F0F0F0F0; //master will read on this address
@@ -22,6 +22,17 @@ char read_buffer[RF24_TRANSFER_SIZE];
 char write_buffer[RF24_TRANSFER_SIZE];
 char *w_data;
 /* Run setup code. */
+
+const int R = 2;
+const int L = 1;
+const int B = 3;
+boolean onR = false;
+boolean onL = false;
+int rightOn = 10; //Default for now; requires a digital output port.
+int leftOn = 11; //Also default for now; requires a digital output port.
+
+
+
 void setup() {
 	Serial.begin(9600);
 	state = DISCONNECTED;
@@ -37,6 +48,48 @@ void setup() {
 	/* For debugging, comment out when not needed. */
 	fdevopen(&serial_console_putc, NULL);
 	rf24.printDetails();
+
+      
+        pinMode(rightOn, OUTPUT);
+        pinMode(leftOn, OUTPUT);
+
+}
+
+
+void turnOn(int key)
+{
+    if (key == 1) {
+        digitalWrite(rightOn, HIGH);
+        onR = true;
+    }
+    else if (key == 2) {
+        digitalWrite(leftOn, HIGH);
+        onL = true;
+    }
+    else if (key == 3) {
+        digitalWrite(rightOn, HIGH);
+        digitalWrite(leftOn, HIGH);
+        onL = true;
+        onR = true;
+    }
+}
+
+void turnOff(int key)
+{
+    if (key == 1) {
+        digitalWrite(rightOn, LOW);
+        onR = false;
+    }
+    else if (key == 2) {
+        digitalWrite(leftOn, LOW);
+        onL = false;
+    }
+    else if (key == 3) {
+        digitalWrite(rightOn, LOW);
+        digitalWrite(leftOn, LOW);
+        onL = false;
+        onR = false;
+    }
 }
 
 
@@ -114,7 +167,34 @@ void read_handler(char *data) {
 	if (strstr(data, "shutdown") == data) {
 		shutdown();
 	} else {
+
+  		if (data == "TURNONRIGHT"){
+                      turnOn(R);
+                      turnOff(L);
+                 }
+
+                 else if (data == "TURNONLEFT"){
+                      turnOn(L);
+                      turnOff(R);
+                 }
+                                  
+                 else if (data == "TURNOFFBOTH"){
+                     turnOff(B);
+                 }
+                 
+                 else if (data == "TURNONBOTH") {
+                     turnOn(B);
+                 }
+                 
+                  else if (data == "TURNOFFLEFT") {
+                     turnOff(L);
+                  }
+                  
+                  else if (data == "TURNOFFRIGHT") {
+                     turnOff(R);
+                  }
 		/* Write code here. */
+
 	}
 }
 
