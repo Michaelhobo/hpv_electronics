@@ -101,10 +101,6 @@ void rf24_init() {
 	pc.printf("MASTER: rf24 init finished\r\n");
 }
 
-void lcd_display_init() {
-	
-}
-
 /* Initialize everything necessary for the scripts. */
 void init() {
 	pc.printf("init");
@@ -141,7 +137,11 @@ void process_rf_input() {
 	led2 = 1;
 	if (sensor_handlers[src_addr]){
 		sensor_handlers[src_addr](receive_buffer + 1);
-		//update lcd display after receiving and sending data to handler
+	}
+}
+
+void update_lcd() {
+	//update lcd display after receiving and sending data to handler
 		//write to LCD screen
         //if (t.read() > last_time + min_time_update){
             //format of the screen is
@@ -181,7 +181,6 @@ void process_rf_input() {
             format_data << seconds;
             format_data << "     ";
             lcd.printf(format_data.str().c_str());
-	}
 }
 
 /* Main sending loop. */
@@ -216,6 +215,7 @@ int main() {
 			rf24.read(NRF24L01P_PIPE_P5, receive_buffer, RF24_TRANSFER_SIZE);
 			process_rf_input();
 		}
+		update_lcd(); //maybe put this elsewhere so it doesnt update all the time
 		
 	}
 }
