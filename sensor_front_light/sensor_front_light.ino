@@ -32,6 +32,7 @@ int rightOn = 10; //Default for now; requires a digital output port.
 int leftOn = 11; //Also default for now; requires a digital output port.
 
 
+
 void setup() {
 	Serial.begin(9600);
 	state = DISCONNECTED;
@@ -47,6 +48,7 @@ void setup() {
 	/* For debugging, comment out when not needed. */
 	fdevopen(&serial_console_putc, NULL);
 	rf24.printDetails();
+
       
         pinMode(rightOn, OUTPUT);
         pinMode(leftOn, OUTPUT);
@@ -89,6 +91,7 @@ void turnOff(int key)
         onR = false;
     }
 }
+
 
 bool connect_master() {
 	Serial.print("connecting master...");
@@ -190,6 +193,8 @@ void read_handler(char *data) {
                   else if (data == "TURNOFFRIGHT") {
                      turnOff(R);
                   }
+		/* Write code here. */
+
 	}
 }
 

@@ -6,7 +6,11 @@
 #include "constants.h"
 
 #define MY_ADDR 1
+<<<<<<< HEAD
 RF24 rf24(9, 10);
+=======
+RF24 rf24(8,7); //change to 7,8 because 9,10 are pwm pins
+>>>>>>> rf24
 
 /* For serial debugging. */
 int serial_console_putc(char c, FILE *) {
@@ -21,7 +25,7 @@ double currentRPM = 0.0;
 const int TIMEINTERVAL = 10; //Seconds
 void addCount()
 {
-  count++;
+	count++;
 }
 uint8_t state; //state that the sensor is in. 0 = connected, 1 = connected, 2 = sleep
 char *name = "template";
@@ -37,7 +41,7 @@ void setup() {
 	write_buffer[0] = MY_ADDR;
 	w_data = (char *) (write_buffer + 1);
 	rf24.begin();
-        attachInterrupt(1, addCount, INPUT);
+	attachInterrupt(1, addCount, INPUT);
 	rf24.setDataRate(RF24_1MBPS);
 	rf24.setCRCLength(RF24_CRC_8);
 	rf24.setPayloadSize(RF24_TRANSFER_SIZE);
@@ -47,11 +51,6 @@ void setup() {
 	/* For debugging, comment out when not needed. */
 	fdevopen(&serial_console_putc, NULL);
 	rf24.printDetails();
-
-	/*if (!connect_master()) {
-		shutdown();
-		}*/
-	//rf24.openWritingPipe(my_pipe);
 }
 
 
@@ -69,25 +68,25 @@ bool connect_master() {
 	int timeout = 100; //timeout in ms;
 	while (!connected) {
 		rf24.stopListening();
-	connected = rf24.write( start_msg,sizeof(char)*10);
-	if (connected) {
-		Serial.println("connect ok...\n\r"); 
-	} else  {
-		Serial.println("connect failed.\n\r");
-        }
-	delay(100);
+		connected = rf24.write( start_msg,sizeof(char)*10);
+		if (connected) {
+			Serial.println("connect ok...\n\r"); 
+		} else  {
+			Serial.println("connect failed.\n\r");
+		}
+		delay(100);
 		/*bool connected = rf24.write(start_msg, sizeof(char) * RF24_TRANSFER_SIZE);
-		if (!connected) {
+			if (!connected) {
 			if (timeout > 1000) {
-				free(start_msg);
-				Serial.println("failed.");
-				return false;
+			free(start_msg);
+			Serial.println("failed.");
+			return false;
 			}
 			delay(timeout);
 
 			timeout += 100;
 			Serial.print("failed...");
-		}*/
+			}*/
 		rf24.startListening();
 
 	}
@@ -103,18 +102,17 @@ bool connect_master() {
  */
 void write_data() {
 	/* Write code here. */
-        sprintf(write_buffer, "%2.1f", currentRPM);
-
+	sprintf(write_buffer, "%2.1f", currentRPM);
 	rf24.stopListening();
 	bool received = false;
 	while (!received) {
 		received = rf24.write(write_buffer, sizeof(char) * 10);
-                	if (received) {
-		Serial.println("write ok...\n\r"); 
-	} else  {
-		Serial.println("write failed.\n\r");
-        }
-	delay(100);
+		if (received) {
+			Serial.println("write ok...\n\r"); 
+		} else  {
+			Serial.println("write failed.\n\r");
+		}
+		delay(100);
 		rf24.startListening();
 	}
 }
@@ -149,48 +147,48 @@ void loop() {
 	// put your main code here, to run repeatedly
 	Serial.println("looping...");
 	if (state == DISCONNECTED) {
-                Serial.println("Disconnected");
+		Serial.println("Disconnected");
 		if (!connect_master()) {
 			state = SLEEP;
 			Serial.println("failed to connect");
 		} else {
-                    state = CONNECTED;
-                }
+			state = CONNECTED;
+		}
 	} else if (state == CONNECTED) {
-                Serial.println("Connected");
+		Serial.println("Connected");
 		read_data();
 		write_data();
-		delay(10000);
+		delay(1000);
 	} else if (state == SLEEP) {
-                Serial.println("Sleep");
+		Serial.println("Sleep");
 		delay(1000);
 		if (connect_master()) {
 			state = CONNECTED;
 		} else {
 			Serial.println("failed to connect");
 			//should it wake up?
-                }
+		}
 	} else if (state == DEEP_SLEEP) {
-               Serial.println("Deep Sleep");
-	        delay(10000);
+		Serial.println("Deep Sleep");
+		delay(10000);
 		if (connect_master()) {
 			state = CONNECTED;
 		} else {
 			Serial.println("failed to connect");
 		}
 	}
-         if (backup != 0){
-             if (backup2 != 0) {
-                 currentRPM = 60*(backup2+backup+count)/(3*TIMEINTERVAL);
-             }
-             else {
-                 currentRPM = 60*(backup+count)/(2*TIMEINTERVAL);
-             } 
-         }
-         else {
-             currentRPM = 60*(count/TIMEINTERVAL);
-         }
-         backup2 = backup;
-         backup = count;
-         count  = 0;
+	if (backup != 0){
+		if (backup2 != 0) {
+			currentRPM = 60*(backup2+backup+count)/(3*TIMEINTERVAL);
+		}
+		else {
+			currentRPM = 60*(backup+count)/(2*TIMEINTERVAL);
+		} 
 	}
+	else {
+		currentRPM = 60*(count/TIMEINTERVAL);
+	}
+	backup2 = backup;
+	backup = count;
+	count  = 0;
+}
