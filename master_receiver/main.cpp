@@ -23,7 +23,7 @@ nRF24L01P rf24(p5, p6, p7, p8, p9, p10);
 TextLCD lcd(p21, p22, p23, p24, p25, p26); // rs, e, d4-d7
 
 Ticker events;
-Timeout timeout;
+Timeout timeout;	
 double speed = 0.0; //calculated speed
 double cadence = 0.0;
 int gear_val = 0;
@@ -144,31 +144,31 @@ void process_rf_input() {
             //format of the screen is
             //cadence          dist
             //______________________
-            //|GEAR         CADENCE|
-            //| XX            XXX  |
-            //|SPEED       TIME    |
-            //| XX        XXX:XX   |
+            //|      GEAR   CADENCE|
+            //|       XX      XXX  |
+            //|SPEED     TIME      |
+            //| XX      XXX:XX     |
             //|---------------------
             //gear              time
             lcd.cls();
 						int last_time = 60;//FOR NOW
             std::ostringstream format_data;
-            format_data << "GEAR         CADENCE";
+            format_data << "      GEAR   CADENCE";
             //line 2
-            format_data << " ";
+            format_data << "       ";
             format_data.width(2);
             format_data << gear_val;
-            format_data << "            ";
+            format_data << "      ";
             format_data.width(3);
             format_data << cadence;
             format_data << "  ";
             //third line
-            format_data << "SPEED       TIME    ";
+            format_data << "SPEED     TIME      ";
             //fourth line
             format_data << " ";
             format_data.width(2);
             format_data << speed;
-            format_data << "        ";
+            format_data << "      ";
             int minutes = (int)last_time/60;
             format_data.width(3);
             format_data << minutes;
@@ -176,7 +176,7 @@ void process_rf_input() {
             int seconds = ((int)last_time) % 60;
             format_data.width(2);
             format_data << seconds;
-            format_data << "   ";
+            format_data << "     ";
             lcd.printf(format_data.str().c_str());
 	}
 }
