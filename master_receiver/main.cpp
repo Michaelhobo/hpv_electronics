@@ -14,6 +14,16 @@ DigitalOut led2(LED2);
 DigitalOut led3(LED3);
 DigitalOut led4(LED4);
 Serial pc(USBTX, USBRX); // tx, rx
+
+/* Button declarations. */
+DigitalIn btn1(p15); //shift up
+DigitalIn btn2(p16); //shift down
+DigitalIn btn3(p17); //turn right
+DigitalIn btn4(p18); //turn left
+InterruptIn btn_change(p27);
+uint8_t button_state = 0; // 0b0000[btn{4,3,2,1}] we're bit packing this
+
+
 xbee xbee(p13, p14, p12);
 nRF24L01P rf24(p5, p6, p7, p8, p9, p10);
 
@@ -36,6 +46,8 @@ void rear_lights_handler(char *data);
 void front_lights_handler(char *data);
 void shifter_handler(char *data);
 
+
+
 /* Prints speed to terminal through a usb. */
 void show_usbterm_speed() {
 	pc.printf("speed: %f\n", speed);
@@ -44,6 +56,62 @@ void show_usbterm_speed() {
 /* Sends speed to XBEE. */
 void send_xbee_speed() {
 	sprintf(speed_buffer, "%f\n", speed);
+}
+
+/* Send a value to the shifter. */
+void send_shifter() {
+	
+}
+
+
+
+
+/* Send a value to turn signal. */
+void send_rear(const char *val) {
+	send_sensor_name("rear_lights", val);
+}
+
+/* Sends value to front lights */
+void send_front(const char *val){
+	send_sensor_name("front_lights", val);
+}
+
+/* On button change, read all button data pins
+ * Compare state with previous state to see which button changed.
+ */
+void button_change() {
+	NVIC_DisableIRQ(UART0_IRQn);
+	if (button_state & 0b00000001 != btn1) { //shift up
+		if (btn1) {
+			gear += 1;
+		}
+		NVIC_EnableIRQ(UART0_IRQn);
+		if (btn1) {
+			send_shifter();
+		}
+	} else if ((button_state & 0b00000010) >> 1 != btn2) { //shift down
+		if (btn2) {
+			gear -= 1;
+		}
+		NVIC_EnableIRQ(UART0_IRQn);
+		if (btn2) {
+			send_shifter();
+		}
+	}	else if ((button_state & 0b00000100) >> 2 != btn3) { //turn right
+		NVIC_EnableIRQ(UART0_IRQn);
+		if (btn3) {
+			send_rear("BR");
+		} else {
+			send_rear("FR");
+		}
+	}	else if ((button_state & 0b00001000) >> 3 != btn4) { //turn left
+		NVIC_EnableIRQ(UART0_IRQn);
+		if (btn4) {
+			send_rear("BL");
+		} else {
+			send_rear("FL");
+		}
+	}
 }
 
 /* Initialize xbee for telemetry. */
@@ -92,11 +160,18 @@ void rf24_init() {
 	pc.printf("MASTER: rf24 init finished\r\n");
 }
 
+/* Initialize Buttons. */
+void button_init() {
+	btn_change.rise(&button_change);
+	btn_change.fall(&button_change);
+}
+
 /* Initialize everything necessary for the scripts. */
 void init() {
 	pc.printf("init");
 	telemetry_init();
 	rf24_init();
+	button_init();
 	//lcd.putc('0');
 }
 
@@ -195,6 +270,8 @@ void send_sensor_name(char *name, char *data) {
 	send_sensor(id, data);
 }
 
+
+
 /* RF24 Handlers. They must all take in a char* parameter. */
 
 /* Gets the seqno from the data packet. */
@@ -238,6 +315,11 @@ unsigned int speed_seqno = 0;
 char *spd_string = (char *) malloc(8);
 void speed_handler(char *data) {
 	pc.printf("speed\r\n");
+	/* if the speed is known to decrease significantly, send a signal for break lights
+	if (speed < lastSpeed - 3){
+		send_sensor_name("rear_lights","NB");
+	}
+*/ 
 /*	unsigned int seqno = get_seqno(data);
 	if (seqno > speed_seqno) {
 		speed = get_speed(data); //should we update anything?
@@ -256,6 +338,7 @@ double get_cadence(char *data) {
 	double cad;
 	sscanf(data, "%lf", &cad);
 	return cad;
+	
 }
 
 /* Cadence handler
