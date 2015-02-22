@@ -1,3 +1,7 @@
+#include <nRF24L01.h>
+#include <RF24.h>
+#include <RF24_config.h>
+
 #include <SPI.h>
 #include "nRF24L01.h"
 #include <stdio.h>
@@ -8,6 +12,7 @@
 #define MY_ADDR 1
 RF24 rf24(8,7); //change to 7,8 because 9,10 are pwm pins
 //INSERTARRAYHERE
+uint8_t listOfGearPositions[11] = {0, 120, 140, 160, 180, 200, 220, 240, 300, 420, 500};
 double distances[11]; //Array of 11 different distances for gear shifting.
 
 /* For serial debugging. */
@@ -142,11 +147,11 @@ void read_handler(char *data) {
                 // read the value from the sensor:
                 CurrentPosition = analogRead(sensorPin); 
                 
-		//take signal from xbee and moves actuator to desired gear.
-                char *a = data[0];
-                char *b = data[1];
-                int shiftv = 10 * atoi(a)+ atoi(b);
-                if (shiftv > 11) {
+		//take signal from rf24 and moves actuator to desired gear.
+                char a = data[0];
+                char b = data[1];
+                int shiftv = 10 * atoi(&a)+ atoi(&b);
+                if (shiftv > 10) {
                   Serial.println("unattainable gear");
                 } else {
                     goalPosition = listOfGearPositions[shiftv];
@@ -162,6 +167,7 @@ void read_handler(char *data) {
                         digitalWrite(relay1Pin, LOW);
                         digitalWrite(relay2Pin, LOW);
                         Serial.println("Shifting Done");
+                        Serial.println(shiftv);
                     }      
                     else if (goalPosition < CurrentPosition) {
                          while (goalPosition < CurrentPosition) {
@@ -174,6 +180,7 @@ void read_handler(char *data) {
                         digitalWrite(relay1Pin, LOW);
                         digitalWrite(relay2Pin, LOW);
                         Serial.println("Shifting Done");
+                        Serial.println(shiftv);
                     }
                 /* I don't know whether this is needed.
                 uint8_t seqno = (uint8_t) data[0];
@@ -182,7 +189,6 @@ void read_handler(char *data) {
                 //master-side: data[1] = (uint8_t) 10;
         }
 
-	}
 }
 
 /* Reads data from master
