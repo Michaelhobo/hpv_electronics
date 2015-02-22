@@ -100,7 +100,7 @@ void rf24_init() {
 }
 
 void lcd_display_init() {
-	
+	lcd.character(0,0,65);
 }
 
 /* Initialize everything necessary for the scripts. */
@@ -108,6 +108,7 @@ void init() {
 	pc.printf("init");
 	telemetry_init();
 	rf24_init();
+	lcd_display_init();
 }
 
 /* Send to a sensor with an id. */
@@ -151,7 +152,8 @@ void process_rf_input() {
             //|---------------------
             //gear              time
             lcd.cls();
-						lcd.character(0, 0, 10);
+						
+						lcd.character(0, 0, 65);
 						//int last_time = 60;//FOR NOW
             /*std::ostringstream format_data;
             format_data << "GEAR         CADENCE";

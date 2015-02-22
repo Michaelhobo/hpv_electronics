@@ -88,7 +88,7 @@ public:
     int rows();
     int columns();
 
-protected:
+//protected:
 
     // Stream implementation functions
     virtual int _putc(int value);
