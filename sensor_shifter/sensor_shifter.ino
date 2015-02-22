@@ -22,8 +22,19 @@ char read_buffer[RF24_TRANSFER_SIZE];
 char write_buffer[RF24_TRANSFER_SIZE];
 char *w_data;
 /* Run setup code. */
+const int relay1Pin =  7;      // the number of the Relay1 pin
+const int relay2Pin =  8;      // the number of the Relay2 pin
+const int sensorPin = 0;    // select the input pin for the potentiometer
 void setup() {
 	Serial.begin(9600);
+        // initialize the relay pin as an output:
+        pinMode(relay1Pin, OUTPUT);    
+        pinMode(relay2Pin, OUTPUT);    
+        
+        //preset the relays to LOW
+        digitalWrite(relay1Pin, LOW); 
+        digitalWrite(relay2Pin, LOW); 
+        
 	state = DISCONNECTED;
 	write_buffer[0] = MY_ADDR;
 	w_data = (char *) (write_buffer + 1);

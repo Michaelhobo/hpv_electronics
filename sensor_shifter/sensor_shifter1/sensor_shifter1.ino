@@ -24,8 +24,23 @@ char read_buffer[RF24_TRANSFER_SIZE];
 char write_buffer[RF24_TRANSFER_SIZE];
 char *w_data;
 /* Run setup code. */
+const int relay1Pin =  3;      // the number of the Relay1 pin
+const int relay2Pin =  4;      // the number of the Relay2 pin
+const int sensorPin = 0;    // select the input pin for the 
+int goalPosition = 350; 
+int CurrentPosition = 0; 
+boolean Extending = false;
+boolean Retracting = false;
 void setup() {
 	Serial.begin(9600);
+        // initialize the relay pin as an output:
+        pinMode(relay1Pin, OUTPUT);    
+        pinMode(relay2Pin, OUTPUT);    
+        
+        //preset the relays to LOW
+        digitalWrite(relay1Pin, LOW); 
+        digitalWrite(relay2Pin, LOW); 
+        
 	state = DISCONNECTED;
 	write_buffer[0] = MY_ADDR;
 	w_data = (char *) (write_buffer + 1);
@@ -124,17 +139,46 @@ void read_handler(char *data) {
 		shutdown();
 	} else {
 		/* Write code here. */
-		//take signal from xbee and switch gear up/down
+                // read the value from the sensor:
+                CurrentPosition = analogRead(sensorPin); 
+                
+		//take signal from xbee and moves actuator to desired gear.
                 char *a = data[0];
                 char *b = data[1];
                 int shiftv = 10 * atoi(a)+ atoi(b);
                 if (shiftv > 11) {
                   Serial.println("unattainable gear");
-                }
-                /*
+                } else {
+                    goalPosition = listOfGearPositions[shiftv];
+                    if (goalPosition > CurrentPosition) {
+                        while (goalPosition > CurrentPosition) {
+                            Retracting = false;
+                            Extending = true;
+                            digitalWrite(relay1Pin, HIGH);  
+                            digitalWrite(relay2Pin, LOW);  
+                            Serial.println("Extending");     
+                            CurrentPosition = analogRead(sensorPin); 
+                        }
+                        digitalWrite(relay1Pin, LOW);
+                        digitalWrite(relay2Pin, LOW);
+                        Serial.println("Shifting Done");
+                    }      
+                    else if (goalPosition < CurrentPosition) {
+                         while (goalPosition < CurrentPosition) {
+                            Retracting = true;
+                            Extending = false;
+                            digitalWrite(relay1Pin, LOW);  
+                            digitalWrite(relay2Pin, HIGH); 
+                            Serial.println("Retracting");         
+                        }  
+                        digitalWrite(relay1Pin, LOW);
+                        digitalWrite(relay2Pin, LOW);
+                        Serial.println("Shifting Done");
+                    }
+                /* I don't know whether this is needed.
                 uint8_t seqno = (uint8_t) data[0];
-                uint8_t shift_val = */
-                
+                */
+                }
                 //master-side: data[1] = (uint8_t) 10;
         }
 
