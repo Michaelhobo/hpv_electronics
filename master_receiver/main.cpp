@@ -4,7 +4,6 @@
 #include "xbee.h"
 #include "nRF24L01P.h"
 #include "../constants.h"
-#include "TextLCD.h"
 
 #define XBEE_SEND_INTERVAL 2
 #define PC_SEND_INTERVAL 1
@@ -17,7 +16,6 @@ DigitalOut led4(LED4);
 Serial pc(USBTX, USBRX); // tx, rx
 xbee xbee(p13, p14, p12);
 nRF24L01P rf24(p5, p6, p7, p8, p9, p10);
-TextLCD lcd(p15, p16, p17, p18, p19, p20, TextLCD::LCD20x4); // rs, e, d4-d7
 
 Ticker events;
 Timeout timeout;
@@ -99,7 +97,7 @@ void init() {
 	pc.printf("init");
 	telemetry_init();
 	rf24_init();
-	lcd.putc('0');
+	//lcd.putc('0');
 }
 
 /* Send to a sensor with an id. */
@@ -239,7 +237,7 @@ double get_speed(char *data) {
 unsigned int speed_seqno = 0;
 char *spd_string = (char *) malloc(8);
 void speed_handler(char *data) {
-	led3 = 1;
+	pc.printf("speed\r\n");
 /*	unsigned int seqno = get_seqno(data);
 	if (seqno > speed_seqno) {
 		speed = get_speed(data); //should we update anything?
@@ -267,7 +265,8 @@ double get_cadence(char *data) {
 unsigned int cadence_seqno = 0;
 char *cad_string = (char *) malloc(8);
 void cadence_handler(char *data) {
-	unsigned int seqno = get_seqno(data);
+	pc.printf("cadence\r\n");
+/*	unsigned int seqno = get_seqno(data);
 	if (seqno > cadence_seqno) {
 		cadence = get_cadence(data);
 		sprintf(cad_string, "%3.4f", cadence);
@@ -277,18 +276,20 @@ void cadence_handler(char *data) {
 		if (cadence_seqno > 0) {
 			send_ack(2, cadence_seqno, cad_string);
 		}
-	}
+	}*/
 }
 
 /* Rear Light handler
  */
 void rear_lights_handler(char *data) {
+	pc.printf("rear_lights\r\n");
 }
 
 /* Front Light handler
  * Not sure what goes here yet. Probably messages like battery, change of status, etc
  */
 void front_lights_handler(char *data) {
+	pc.printf("front_lights\r\n");
 }
 
 /* Shifter handler
