@@ -27,6 +27,8 @@ Timeout timeout;
 double speed = 0.0; //calculated speed
 double cadence = 0.0;
 int gear_val = 0;
+clock_t begin, end;
+double last_time;
 
 char receive_buffer[RF24_TRANSFER_SIZE];
 char speed_buffer[RF24_TRANSFER_SIZE];
@@ -100,37 +102,31 @@ void rf24_init() {
 }
 
 void lcd_update_gear() {
-	char g1 =(char)( gear_val/10);
-	char g2 = (char)(gear_val%10);
-	lcd.character(7,1,g1);
-	lcd.character(8,1,g2);
+	lcd.character(7,1,'0'+(char)( gear_val/10));
+	lcd.character(8,1,0'0'+(char)(gear_val%10));
 }
 
 void lcd_update_cadence() {
-	char c1 = (char)((int)cadence/100);
-	char c2 = 	(char)((int)cadence/10%10);
-	char c3 = (char)((int)cadence%10);
-	lcd.character(15,1,c1);
-	lcd.character(16,1,c2);
-	lcd.character(17,1,c3);
+	lcd.character(15,1,'0'+(char)((int)cadence/100));
+	lcd.character(16,1,'0'+(char)((int)cadence/10%10));
+	lcd.character(17,1,0'0'+(char)((int)cadence%10));
 }
 
 void lcd_update_speed() {
-	char s1 = (char)((int)speed/10);
-	char s2 = (char)((int)speed%10);
-	lcd.character(2,3,s1);
-	lcd.character(3,3,s2);
+	lcd.character(2,3,'0'+(char)((int)speed/10));
+	lcd.character(3,3,'0'+(char)((int)speed%10));
 }
 
 void lcd_update_time() {
-	int last_time=66; //for now
+	end = clock();
+	last_time = (double)(end - begin) / CLOCKS_PER_SEC;
 	lcd.character(8,3,54);
-	lcd.character(8,3,'0'+(char)(last_time/60/100); 
-	lcd.character(9,3, '0' + (char)(last_time/60/10%10));
-	lcd.character(10,3,'0' + (char)(last_time/60%10));
+	lcd.character(8,3,'0'+(char)((int)last_time/60/100); 
+	lcd.character(9,3, '0' + (char)((int)last_time/60/10%10));
+	lcd.character(10,3,'0' + (char)((int)last_time/60%10));
 	lcd.character(11,3,58);
-	lcd.character(12,3,'0'+(char)(last_time%60/10));
-	lcd.character(13,3,'0'+(char)(last_time%60%10));
+	lcd.character(12,3,'0'+(char)((int)last_time%60/10));
+	lcd.character(13,3,'0'+(char)((int)last_time%60%10));
 }
 
 void lcd_display_init() {
@@ -170,6 +166,7 @@ void init() {
 	pc.printf("init");
 	telemetry_init();
 	rf24_init();
+	begin = clock();
 	lcd_display_init();
 }
 
@@ -213,9 +210,9 @@ void process_rf_input() {
             //| XX        XXX:XX   |
             //|---------------------
             //gear              time
-            lcd.cls();
+            //lcd.cls();
 						
-						lcd.character(0, 0, 65);
+
 						//int last_time = 60;//FOR NOW
             /*std::ostringstream format_data;
             format_data << "GEAR         CADENCE";
@@ -278,7 +275,7 @@ int main() {
 			rf24.read(NRF24L01P_PIPE_P5, receive_buffer, RF24_TRANSFER_SIZE);
 			process_rf_input();
 		}
-		
+		lcd_update_time();
 	}
 }
 
