@@ -103,13 +103,13 @@ void rf24_init() {
 
 void lcd_update_gear() {
 	lcd.character(7,1,'0'+(char)( gear_val/10));
-	lcd.character(8,1,0'0'+(char)(gear_val%10));
+	lcd.character(8,1,'0'+(char)(gear_val%10));
 }
 
 void lcd_update_cadence() {
 	lcd.character(15,1,'0'+(char)((int)cadence/100));
 	lcd.character(16,1,'0'+(char)((int)cadence/10%10));
-	lcd.character(17,1,0'0'+(char)((int)cadence%10));
+	lcd.character(17,1,'0'+(char)((int)cadence%10));
 }
 
 void lcd_update_speed() {
@@ -121,7 +121,7 @@ void lcd_update_time() {
 	end = clock();
 	last_time = (double)(end - begin) / CLOCKS_PER_SEC;
 	lcd.character(8,3,54);
-	lcd.character(8,3,'0'+(char)((int)last_time/60/100); 
+	lcd.character(8,3,'0'+(char)((int)last_time/60/100)); 
 	lcd.character(9,3, '0' + (char)((int)last_time/60/10%10));
 	lcd.character(10,3,'0' + (char)((int)last_time/60%10));
 	lcd.character(11,3,58);
