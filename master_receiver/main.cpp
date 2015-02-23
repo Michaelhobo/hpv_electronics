@@ -3,12 +3,9 @@
 #include <stdio.h>
 #include "xbee.h"
 #include "nRF24L01P.h"
+#include "../constants.h"
 #include "TextLCD.h"
-#include "constants/constants.h"
-#include <string>
-#include <sstream>
 
-using namespace std;
 #define XBEE_SEND_INTERVAL 2
 #define PC_SEND_INTERVAL 1
 #define MY_ADDR 0
@@ -35,7 +32,7 @@ char speed_buffer[RF24_TRANSFER_SIZE];
 char send_buffer[RF24_TRANSFER_SIZE];
 const char *sensor_names[255] = {0};
 void (*sensor_handlers[255])(char *data);
-char sensor_states[255] = {DISCONNECTED};
+uint8_t sensor_states[255];
 
 /* RF24 Handlers. They must all take in a char* parameter. */
 void receiver_handler(char *data);
@@ -65,7 +62,7 @@ void telemetry_init() {
 void init_sensor(int id, const char *name, void (*handler)(char *)) {
 	sensor_names[id] = name;
 	sensor_handlers[id] = handler;
-	sensor_states[id] = 0;
+	sensor_states[id] = (uint8_t) DISCONNECTED;
 }
 
 /* initialize all rf24 sensor data. */
@@ -100,6 +97,7 @@ void rf24_init() {
 	rf24.enable();
 	pc.printf("MASTER: rf24 init finished\r\n");
 }
+
 
 void lcd_update_gear() {
 	lcd.character(7,1,'0'+(char)( gear_val/10));
@@ -166,7 +164,6 @@ void init() {
 	pc.printf("init");
 	telemetry_init();
 	rf24_init();
-	begin = clock();
 	lcd_display_init();
 }
 
@@ -182,16 +179,6 @@ bool send_sensor(uint8_t id, char *data) {
 	}
 	return received;
 }
-/* Process a connection. */
-void process_connection() {
-	uint8_t src_addr = (uint8_t) receive_buffer[0];
-	if (sensor_states[src_addr] == DISCONNECTED) {
-		if (strstr(receive_buffer + 1, "connect") == (receive_buffer + 1)) {
-			led4 = 1;
-			sensor_states[src_addr] = CONNECTED;
-		}
-	}
-}
 /* Process RF24 input and send it to the correct handler. */
 void process_rf_input() {
 	uint8_t src_addr = (uint8_t) receive_buffer[0];
@@ -201,13 +188,31 @@ void process_rf_input() {
 	}
 }
 
+/* Process a connection. */
+void process_connection() {
+	uint8_t src_addr = (uint8_t) receive_buffer[0];
+	if (src_addr >= 0 && src_addr <= 5) {
+		//pc.printf("src_addr in range.\r\n");
+		if (sensor_states[src_addr] == DISCONNECTED) {
+			if (strstr(receive_buffer + 1, "connect") == (receive_buffer + 1)) {
+				//led4 = 1;
+				pc.printf("sensor_states[%d] = %d\r\n", src_addr, sensor_states[src_addr]);
+				sensor_states[src_addr] = (uint8_t) CONNECTED;
+			}
+		} else if (sensor_states[src_addr] == CONNECTED) {
+			pc.printf("CONNECTED");
+			process_rf_input();
+		}
+	} else {
+		pc.printf("src_addr out of range\r\n");
+	}
+}
 /* Main sending loop. */
 int main() {
 	init();
 	pc.printf("Starting Logging.\n");
 	//events.attach(&send_xbee_speed, XBEE_SEND_INTERVAL);
 	//events.attach(&show_usbterm_speed, PC_SEND_INTERVAL);
-	events.attach(&lcd_update_time, 1);
 	while(1) {
 		if (rf24.readable(NRF24L01P_PIPE_P0)) {
 			led1 = 1;
@@ -218,21 +223,26 @@ int main() {
 			process_connection();
 		} else if (rf24.readable(NRF24L01P_PIPE_P2)) {
 			led1 = 1;
+			pc.printf("rf24 pipe2.\r\n");
 			rf24.read(NRF24L01P_PIPE_P2, receive_buffer, RF24_TRANSFER_SIZE);
 			process_rf_input();
 		} else if (rf24.readable(NRF24L01P_PIPE_P3)) {
-			led1 = 1;
+			led3 = 1;
+			pc.printf("rf24 pipe3.\r\n");
 			rf24.read(NRF24L01P_PIPE_P3, receive_buffer, RF24_TRANSFER_SIZE);
 			process_rf_input();
 		} else if (rf24.readable(NRF24L01P_PIPE_P4)) {
 			led1 = 1;
+			pc.printf("rf24 pipe4.\r\n");
 			rf24.read(NRF24L01P_PIPE_P4, receive_buffer, RF24_TRANSFER_SIZE);
 			process_rf_input();
 		} else if (rf24.readable(NRF24L01P_PIPE_P5)) {
 			led1 = 1;
+			pc.printf("rf24 pipe5.\r\n");
 			rf24.read(NRF24L01P_PIPE_P5, receive_buffer, RF24_TRANSFER_SIZE);
 			process_rf_input();
 		}
+		lcd_update_time(); //make an event for this?
 	}
 }
 
@@ -295,8 +305,9 @@ double get_speed(char *data) {
 unsigned int speed_seqno = 0;
 char *spd_string = (char *) malloc(8);
 void speed_handler(char *data) {
-	pc.printf("speed\r\n");
-	/*if (seqno > speed_seqno) {
+	led3 = 1;
+/*	unsigned int seqno = get_seqno(data);
+	if (seqno > speed_seqno) {
 		speed = get_speed(data); //should we update anything?
 		sprintf(spd_string, "%3.4f", speed);
 		send_ack(1, speed_seqno, spd_string);
@@ -312,7 +323,6 @@ void speed_handler(char *data) {
 double get_cadence(char *data) {
 	double cad;
 	sscanf(data, "%lf", &cad);
-	lcd_update_cadence();
 	return cad;
 }
 
@@ -323,8 +333,7 @@ double get_cadence(char *data) {
 unsigned int cadence_seqno = 0;
 char *cad_string = (char *) malloc(8);
 void cadence_handler(char *data) {
-	pc.printf("cadence\r\n");
-/*	unsigned int seqno = get_seqno(data);
+	unsigned int seqno = get_seqno(data);
 	if (seqno > cadence_seqno) {
 		cadence = get_cadence(data);
 		sprintf(cad_string, "%3.4f", cadence);
@@ -334,20 +343,18 @@ void cadence_handler(char *data) {
 		if (cadence_seqno > 0) {
 			send_ack(2, cadence_seqno, cad_string);
 		}
-	}*/
+	}
 }
 
 /* Rear Light handler
  */
 void rear_lights_handler(char *data) {
-	pc.printf("rear_lights\r\n");
 }
 
 /* Front Light handler
  * Not sure what goes here yet. Probably messages like battery, change of status, etc
  */
 void front_lights_handler(char *data) {
-	pc.printf("front_lights\r\n");
 }
 
 /* Shifter handler
