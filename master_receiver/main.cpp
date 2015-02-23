@@ -99,9 +99,71 @@ void rf24_init() {
 	pc.printf("MASTER: rf24 init finished\r\n");
 }
 
-void lcd_display_init() {
-	lcd.character(0,0,65);
+void lcd_update_gear() {
+	char g1 =(char)( gear_val/10);
+	char g2 = (char)(gear_val%10);
+	lcd.character(7,1,g1);
+	lcd.character(8,1,g2);
 }
+
+void lcd_update_cadence() {
+	char c1 = (char)((int)cadence/100);
+	char c2 = 	(char)((int)cadence/10%10);
+	char c3 = (char)((int)cadence%10);
+	lcd.character(15,1,c1);
+	lcd.character(16,1,c2);
+	lcd.character(17,1,c3);
+}
+
+void lcd_update_speed() {
+	char s1 = (char)((int)speed/10);
+	char s2 = (char)((int)speed%10);
+	lcd.character(2,3,s1);
+	lcd.character(3,3,s2);
+}
+
+void lcd_update_time() {
+	int last_time=66; //for now
+	lcd.character(8,3,54);
+	lcd.character(8,3,'0'+(char)(last_time/60/100); 
+	lcd.character(9,3, '0' + (char)(last_time/60/10%10));
+	lcd.character(10,3,'0' + (char)(last_time/60%10));
+	lcd.character(11,3,58);
+	lcd.character(12,3,'0'+(char)(last_time%60/10));
+	lcd.character(13,3,'0'+(char)(last_time%60%10));
+}
+
+void lcd_display_init() {
+	lcd.character(6,0,71);
+	lcd.character(7,0,69);
+	lcd.character(8,0,65);
+	lcd.character(9,0,82);
+
+	lcd.character(13,0,67);
+	lcd.character(14,0,65);
+	lcd.character(15,0,68);
+	lcd.character(16,0,69);
+	lcd.character(17,0,78);
+	lcd.character(18,0,67);
+	lcd.character(19,0,69);
+	
+	lcd.character(0,2,83);
+	lcd.character(1,2,80);
+	lcd.character(2,2,69);
+	lcd.character(3,2,69);
+	lcd.character(4,2,68);
+	
+	lcd.character(9,2,84);
+	lcd.character(10,2,73);
+	lcd.character(11,2,77);
+	lcd.character(12,2,69);
+
+	lcd_update_gear();
+	lcd_update_cadence();
+	lcd_update_speed();
+	lcd_update_time();
+}
+
 
 /* Initialize everything necessary for the scripts. */
 void init() {
@@ -297,6 +359,7 @@ void speed_handler(char *data) {
 double get_cadence(char *data) {
 	double cad;
 	sscanf(data, "%lf", &cad);
+	lcd_update_cadence();
 	return cad;
 }
 
