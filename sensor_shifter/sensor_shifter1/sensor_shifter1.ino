@@ -29,8 +29,8 @@ char read_buffer[RF24_TRANSFER_SIZE];
 char write_buffer[RF24_TRANSFER_SIZE];
 char *w_data;
 /* Run setup code. */
-const int relay1Pin =  3;      // the number of the Relay1 pin
-const int relay2Pin =  4;      // the number of the Relay2 pin
+const int relay1Pin =  5;      // the number of the Relay1 pin
+const int relay2Pin =  6;      // the number of the Relay2 pin
 const int sensorPin = 0;    // select the input pin for the 
 int goalPosition = 350; 
 int CurrentPosition = 0; 
