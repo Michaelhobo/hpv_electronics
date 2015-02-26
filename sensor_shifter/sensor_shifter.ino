@@ -13,7 +13,6 @@ int serial_console_putc(char c, FILE *) {
 	Serial.write(c);
 	return 0;
 }
-yes
 uint8_t state; //state that the sensor is in. 0 = connected, 1 = connected, 2 = sleep
 char *name = "template";
 uint64_t master_general_address = ((MY_ADDR % 4) + 2) & 0x00F0F0F0F0; //master will read on this address
@@ -33,7 +32,7 @@ void setup() {
 	rf24.setPayloadSize(RF24_TRANSFER_SIZE);
 	rf24.setChannel(101);
 	rf24.setAutoAck(true);
-
+	rf24.openReadingPipe(1, 0x00F0F0F0F1 & (MY_ADDR << 32));
 	/* For debugging, comment out when not needed. */
 	fdevopen(&serial_console_putc, NULL);
 	rf24.printDetails();
