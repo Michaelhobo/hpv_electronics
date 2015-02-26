@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "xbee.h"
 #include "nRF24L01P.h"
-#include "../constants.h"
+#include "constants/constants.h"
 
 #define XBEE_SEND_INTERVAL 2
 #define PC_SEND_INTERVAL 1
