@@ -4,6 +4,7 @@
 #include "xbee.h"
 #include "nRF24L01P.h"
 #include "constants/constants.h"
+#include "main.h"
 
 #define XBEE_SEND_INTERVAL 2
 #define PC_SEND_INTERVAL 1
@@ -16,6 +17,8 @@ DigitalOut led4(LED4);
 Serial pc(USBTX, USBRX); // tx, rx
 xbee xbee(p13, p14, p12);
 nRF24L01P rf24(p5, p6, p7, p8, p9, p10);
+
+InterruptIn button(p15);
 
 Ticker events;
 Timeout timeout;
@@ -92,12 +95,16 @@ void rf24_init() {
 	pc.printf("MASTER: rf24 init finished\r\n");
 }
 
+void send_one() {
+	send_sensor(1, "h");
+}
+
 /* Initialize everything necessary for the scripts. */
 void init() {
 	pc.printf("init");
 	telemetry_init();
 	rf24_init();
-	//lcd.putc('0');
+	button.rise(&send_one);
 }
 
 /* Send to a sensor with an id. */
