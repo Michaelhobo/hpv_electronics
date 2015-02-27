@@ -96,7 +96,9 @@ void rf24_init() {
 }
 
 void send_one() {
-	send_sensor(1, "h");
+	pc.printf("h sent\r\n");
+	uint8_t sent = send_sensor(1, "h");
+	pc.printf("send %d\r\n", sent);
 }
 
 /* Initialize everything necessary for the scripts. */
@@ -108,16 +110,15 @@ void init() {
 }
 
 /* Send to a sensor with an id. */
-bool send_sensor(uint8_t id, char *data) {
+uint8_t send_sensor(uint8_t id, char *data) {
+	pc.printf("send_sensor\r\n");
 	send_buffer[0] = id;
 	sprintf(send_buffer + 1, "%s", data);
-	uint64_t pipe_addr = (id << 8) & 1;
+	uint64_t pipe_addr = 0x00F0F0F0F1 | (1LL << 32);
 	rf24.setTxAddress(pipe_addr, paddr_size);
-	bool received = false;
-	for (int i = 0; i < 10 && !received; i++) {
-		received = rf24.write(NRF24L01P_PIPE_P0, send_buffer, RF24_TRANSFER_SIZE);
-	}
-	return received;
+	uint8_t num_received = 0;
+	num_received = rf24.write(NRF24L01P_PIPE_P0, send_buffer, RF24_TRANSFER_SIZE);
+	return num_received;
 }
 /* Process RF24 input and send it to the correct handler. */
 void process_rf_input() {

@@ -869,9 +869,11 @@ int nRF24L01P::write(int pipe, char *data, int count) {
     enable();
     wait_us(_NRF24L01P_TIMING_Thce_us);
     disable();
-
-    while ( !( getStatusRegister() & _NRF24L01P_STATUS_TX_DS ) ) {
-
+		int c = 0;
+		int limit = 10;
+    while ( !( getStatusRegister() & _NRF24L01P_STATUS_TX_DS ) && c < limit) {
+				c += 1;
+				//printf("ho\r\n");
         // Wait for the transfer to complete
 
     }
@@ -887,7 +889,9 @@ int nRF24L01P::write(int pipe, char *data, int count) {
 
     ce_ = originalCe;
     wait_us( _NRF24L01P_TIMING_Tpece2csn_us );
-
+		if (c == limit) {
+			count = 0;
+		}
     return count;
 
 }

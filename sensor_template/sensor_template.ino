@@ -114,6 +114,7 @@ void read_handler(char *data) {
 		shutdown();
 	} else {
 		/* Write code here. */
+                Serial.println("AHHHHHHHHHHHHHHHHHH");
 	}
 }
 
@@ -122,6 +123,7 @@ void read_handler(char *data) {
  */
 void read_data() {
 	if (rf24.available()) {
+                Serial.println("OHHHHHHHHHHHHH");
 		rf24.read(read_buffer, RF24_TRANSFER_SIZE);
 		if (read_buffer[0] == MY_ADDR) {
 			read_handler(read_buffer + 2);
