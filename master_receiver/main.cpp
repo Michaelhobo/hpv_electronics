@@ -99,6 +99,7 @@ void send_one() {
 	pc.printf("h sent\r\n");
 	uint8_t sent = send_sensor(1, "h");
 	pc.printf("send %d\r\n", sent);
+	//rf24.setTxAddress(0x01F0F0F0F1, 5);
 }
 
 /* Initialize everything necessary for the scripts. */
@@ -114,10 +115,12 @@ uint8_t send_sensor(uint8_t id, char *data) {
 	pc.printf("send_sensor\r\n");
 	send_buffer[0] = id;
 	sprintf(send_buffer + 1, "%s", data);
-	uint64_t pipe_addr = 0x00F0F0F0F1 | (1LL << 32);
+	uint64_t pipe_addr = 0x01F0F0F0F1;//0x00F0F0F0F1 | (1LL << 32);
+	rf24.setTransmitMode();
 	rf24.setTxAddress(pipe_addr, paddr_size);
 	uint8_t num_received = 0;
-	num_received = rf24.write(NRF24L01P_PIPE_P0, send_buffer, RF24_TRANSFER_SIZE);
+	num_received = rf24.write(NRF24L01P_PIPE_P0, "hihihihihi", RF24_TRANSFER_SIZE);
+	rf24.setReceiveMode();
 	return num_received;
 }
 /* Process RF24 input and send it to the correct handler. */
