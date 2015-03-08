@@ -6,11 +6,8 @@
 #include "constants.h"
 
 #define MY_ADDR 1
-<<<<<<< HEAD
 RF24 rf24(9, 10);
-=======
 RF24 rf24(8,7); //change to 7,8 because 9,10 are pwm pins
->>>>>>> rf24
 
 /* For serial debugging. */
 int serial_console_putc(char c, FILE *) {
