@@ -1,32 +1,5 @@
-/*
-
-Linear Actuator Control using preset position
- 
-This demo shows how to do basic control of a large linear
-actuator using an Arduino and two buttons. Each button is hard
-coded with a preset position. Pressing a button will move
-the actuator to that position.
- 
- The circuit:
- * RobotGeek Pushbutton - Digital Pin 1
- * RobotGeek Relay - Digital Pin 4 
- * RobotGeek Relay - Digital Pin 7 
- 
-Products Used in this demo:
- - http://www.robotgeek.com/linear-actuators
- - http://www.robotgeek.com/robotgeek-geekduino-sensor-kit
- - http://www.robotgeek.com/robotGeek-pushbutton NOT USED, INSTEAD USE XBEE??
- - http://www.robotgeek.com/robotgeek-relay
- 
- */
-
 // constants won't change. They're used here to set pin numbers:
-const int button1Pin = 2;      // the number of the pushbutton1 pine pushbutton2 pin
-
-
-const int relay1Pin =  7;      // the number of the Relay1 pin
-const int relay2Pin =  8;      // the number of the Relay2 pin
-const int sensorPin = 0;    // select the input pin for the potentiometer
+const int servo1 = 9;      // the number of the pushbutton1 pine pushbutton2 pin
 
 // variables will change:
 int button1State = 0;         // variable for reading the pushbutton status
