@@ -29,6 +29,8 @@ double cadence = 0.0;
 int gear_val = 0;
 clock_t begin, end;
 double last_time;
+int landing_gear = 1; //1 for down, 0 for up
+int landing_gear_mode = 0; //0 for manual, 1 for auto
 
 char receive_buffer[RF24_TRANSFER_SIZE];
 char speed_buffer[RF24_TRANSFER_SIZE];
@@ -129,11 +131,28 @@ void lcd_update_time() {
 	lcd.character(13,3,'0'+(char)((int)last_time%60%10));
 }
 
+void lcd_update_landing_gear() {
+	if (landing_gear_mode == 0) { //if "a"uto
+		lcd.character(3,0,065);		
+	} else if (landing_gear_mode ==1) { //if "m"anual
+		lcd.character(3,0,077);
+	}
+	if (landing_gear == 0) { //if "u"p
+		lcd.character(3,0,85); 		
+	} else if (landing_gear_mode ==1) { //if "d"own
+		lcd.character(3,0,068);
+	}
+}
+
 void lcd_display_init() {
 	lcd.character(6,0,71);
 	lcd.character(7,0,69);
 	lcd.character(8,0,65);
 	lcd.character(9,0,82);
+
+	lcd.character(0,0,076);
+	lcd.character(1,0,071);
+	lcd.character(2,0,058);
 
 	lcd.character(13,0,67);
 	lcd.character(14,0,65);
@@ -158,6 +177,7 @@ void lcd_display_init() {
 	lcd_update_cadence();
 	lcd_update_speed();
 	lcd_update_time();
+	lcd_update_landing_gear();
 }
 
 
@@ -397,3 +417,10 @@ void front_lights_handler(char *data) {
 void shifter_handler(char *data) {
 }
 
+/* Landing Gear handler
+ * Does landing gear status need a handler?
+ * Need to know whether or not landing gear is on auto or manual,
+ * and whether it is down or up.
+ */
+void landing_gear_handler(char *data) {
+}
