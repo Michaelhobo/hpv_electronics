@@ -1,0 +1,6 @@
+next steps:
+migrate to 3.3V arduino
+build 3.3v boards
+write sleep/shutdown code
+battery level indicator
+sensor code

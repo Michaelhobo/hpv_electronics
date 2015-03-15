@@ -1,14 +1,12 @@
-#include <nRF24L01.h>
-#include <RF24.h>
-#include <RF24_config.h>
-
 #include <SPI.h>
+#include "nRF24L01.h"
 #include <stdio.h>
+#include "RF24.h"
 #include "println.h"
 #include "constants.h"
 
 #define MY_ADDR 1
-RF24 rf24(9, 10);
+RF24 rf24(8,7); //change to 7,8 because 9,10 are pwm pins
 
 /* For serial debugging. */
 int serial_console_putc(char c, FILE *) {
@@ -132,7 +130,8 @@ void write_data() {
 }
 /* Shut down this sensor. */
 void shutdown() {
-  //power down antenna, set all unused pins low, put microcontroller to sleep for 1/2(?) second then wake up
+	
+	//power down antenna, set all unused pins low, put microcontroller to sleep for 1/2(?) second then wake up
 }
 
 /* Handles an incoming packet meant for this slave.
