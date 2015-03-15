@@ -32,9 +32,13 @@ uint8_t sensor_states[255];
 void receiver_handler(char *data);
 void speed_handler(char *data);
 void cadence_handler(char *data);
-void rear_lights_handler(char *data);
-void front_lights_handler(char *data);
+// void rear_lights_handler(char *data);
+// void front_lights_handler(char *data);
+void left_turn_handler(char *data);
+void right_turn_handler(char *data);
 void shifter_handler(char *data);
+void landing_gear_handler(char *data);
+
 
 /* Prints speed to terminal through a usb. */
 void show_usbterm_speed() {
@@ -70,9 +74,12 @@ void rf24_init() {
 	init_sensor(0, "receiver", &receiver_handler);
 	init_sensor(1, "speed", &speed_handler);
 	init_sensor(2, "cadence", &cadence_handler);
-	init_sensor(3, "rear_lights", &rear_lights_handler);
-	init_sensor(4, "front_lights", &front_lights_handler);
+	// init_sensor(3, "rear_lights", &rear_lights_handler);
+	// init_sensor(4, "front_lights", &front_lights_handler);
+    init_sensor(3, "left_turn", &left_turn_handler);
+    init_sensor(4, "right_turn", &right_turn_handler;
 	init_sensor(5, "shifter", &shifter_handler);
+    init_sensor(6, "landing_gear", &landing_gear_handler);
 	rf24.powerUp();
 	rf24.setRfFrequency(2501);
 	rf24.setTransferSize(RF24_TRANSFER_SIZE);
@@ -127,14 +134,14 @@ void process_connection() {
 	if (src_addr >= 0 && src_addr <= 5) {
 		//pc.printf("src_addr in range.\r\n");
 		if (sensor_states[src_addr] == DISCONNECTED) {
-			if (strstr(receive_buffer + 1, "connect") == (receive_buffer + 1)) {
-				//led4 = 1;
-				pc.printf("sensor_states[%d] = %d\r\n", src_addr, sensor_states[src_addr]);
-				sensor_states[src_addr] = (uint8_t) CONNECTED;
-			}
+    if (strstr(receive_buffer + 1, "connect") == (receive_buffer + 1)) {
+    	//led4 = 1;
+    	pc.printf("sensor_states[%d] = %d\r\n", src_addr, sensor_states[src_addr]);
+    	sensor_states[src_addr] = (uint8_t) CONNECTED;
+    }
 		} else if (sensor_states[src_addr] == CONNECTED) {
-			pc.printf("CONNECTED");
-			process_rf_input();
+    pc.printf("CONNECTED");
+    process_rf_input();
 		}
 	} else {
 		pc.printf("src_addr out of range\r\n");
@@ -148,32 +155,32 @@ int main() {
 	//events.attach(&show_usbterm_speed, PC_SEND_INTERVAL);
 	while(1) {
 		if (rf24.readable(NRF24L01P_PIPE_P0)) {
-			led1 = 1;
-			pc.printf("rf24 connection.\r\n");
-			rf24.read(NRF24L01P_PIPE_P0, receive_buffer, RF24_TRANSFER_SIZE);
-			pc.printf(receive_buffer);
-			pc.printf("\r\n");
-			process_connection();
+    led1 = 1;
+    pc.printf("rf24 connection.\r\n");
+    rf24.read(NRF24L01P_PIPE_P0, receive_buffer, RF24_TRANSFER_SIZE);
+    pc.printf(receive_buffer);
+    pc.printf("\r\n");
+    process_connection();
 		} else if (rf24.readable(NRF24L01P_PIPE_P2)) {
-			led1 = 1;
-			pc.printf("rf24 pipe2.\r\n");
-			rf24.read(NRF24L01P_PIPE_P2, receive_buffer, RF24_TRANSFER_SIZE);
-			process_rf_input();
+    led1 = 1;
+    pc.printf("rf24 pipe2.\r\n");
+    rf24.read(NRF24L01P_PIPE_P2, receive_buffer, RF24_TRANSFER_SIZE);
+    process_rf_input();
 		} else if (rf24.readable(NRF24L01P_PIPE_P3)) {
-			led3 = 1;
-			pc.printf("rf24 pipe3.\r\n");
-			rf24.read(NRF24L01P_PIPE_P3, receive_buffer, RF24_TRANSFER_SIZE);
-			process_rf_input();
+    led3 = 1;
+    pc.printf("rf24 pipe3.\r\n");
+    rf24.read(NRF24L01P_PIPE_P3, receive_buffer, RF24_TRANSFER_SIZE);
+    process_rf_input();
 		} else if (rf24.readable(NRF24L01P_PIPE_P4)) {
-			led1 = 1;
-			pc.printf("rf24 pipe4.\r\n");
-			rf24.read(NRF24L01P_PIPE_P4, receive_buffer, RF24_TRANSFER_SIZE);
-			process_rf_input();
+    led1 = 1;
+    pc.printf("rf24 pipe4.\r\n");
+    rf24.read(NRF24L01P_PIPE_P4, receive_buffer, RF24_TRANSFER_SIZE);
+    process_rf_input();
 		} else if (rf24.readable(NRF24L01P_PIPE_P5)) {
-			led1 = 1;
-			pc.printf("rf24 pipe5.\r\n");
-			rf24.read(NRF24L01P_PIPE_P5, receive_buffer, RF24_TRANSFER_SIZE);
-			process_rf_input();
+    led1 = 1;
+    pc.printf("rf24 pipe5.\r\n");
+    rf24.read(NRF24L01P_PIPE_P5, receive_buffer, RF24_TRANSFER_SIZE);
+    process_rf_input();
 		}
 	}
 }
@@ -246,7 +253,7 @@ void speed_handler(char *data) {
 	} else if (seqno == 0) {
 		send_ack(1, 0, (char *) "ack");
 		if (speed_seqno > 0) {
-			send_ack(1, speed_seqno, spd_string);
+    send_ack(1, speed_seqno, spd_string);
 		}
 	}*/
 }
@@ -274,27 +281,34 @@ void cadence_handler(char *data) {
 	} else if (seqno == 0) {
 		send_ack(2, 0, (char *) "ack");
 		if (cadence_seqno > 0) {
-			send_ack(2, cadence_seqno, cad_string);
+    send_ack(2, cadence_seqno, cad_string);
 		}
 	}*/
 }
 
-/* Rear Light handler
- */
-void rear_lights_handler(char *data) {
-	pc.printf("rear_lights\r\n");
-}
+// /* Rear Light handler
+ // */
+// void rear_lights_handler(char *data) {
+	// pc.printf("rear_lights\r\n");
+// }
 
-/* Front Light handler
- * Not sure what goes here yet. Probably messages like battery, change of status, etc
- */
-void front_lights_handler(char *data) {
-	pc.printf("front_lights\r\n");
-}
+// /* Front Light handler
+ // * Not sure what goes here yet. Probably messages like battery, change of status, etc
+ // */
+// void front_lights_handler(char *data) {
+	// pc.printf("front_lights\r\n");
+// }
+
+/* Left turn handler */
+void left_turn_handler(char *data) {}
+
+/* Right turn handler */
+void right_turn_handler(char *data) {}
 
 /* Shifter handler
  * not sure what goes here yet. Probably messages like battery, change of status, etc
  */
-void shifter_handler(char *data) {
-}
+void shifter_handler(char *data) {}
 
+/* Landing gear handler */
+void landing_gear_handler (char *data) {}
