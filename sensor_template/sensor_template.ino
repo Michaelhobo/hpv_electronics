@@ -23,6 +23,8 @@ char *w_data;
 /* Run setup code. */
 void setup() {
 	Serial.begin(9600);
+        pinMode(9, OUTPUT);
+        digitalWrite(9, 1);
 	state = DISCONNECTED;
 	write_buffer[0] = MY_ADDR;
 	w_data = (char *) (write_buffer + 1);
@@ -51,7 +53,7 @@ bool connect_master() {
 	//rf24.openWritingPipe(0x00F0F0F0F0);
 	//rf24.openReadingPipe(1, 0xF0F0F0F0D2);
 	bool connected = false;
-	int timeout = 100; //timeout in ms;
+	int timeout = 200; //timeout in ms;
 	while (!connected) {
 		rf24.stopListening();
 	connected = rf24.write( start_msg,sizeof(char)*10);
@@ -60,21 +62,8 @@ bool connect_master() {
 	} else  {
 		Serial.println("connect failed.\n\r");
         }
-	delay(100);
-		/*bool connected = rf24.write(start_msg, sizeof(char) * RF24_TRANSFER_SIZE);
-		if (!connected) {
-			if (timeout > 1000) {
-				free(start_msg);
-				Serial.println("failed.");
-				return false;
-			}
-			delay(timeout);
-
-			timeout += 100;
-			Serial.print("failed...");
-		}*/
-		rf24.startListening();
-
+	delay(200);
+        rf24.startListening();
 	}
 	free(start_msg);
 	Serial.println("done.");
@@ -112,12 +101,12 @@ void shutdown() {
  */
 void read_handler(char *data) {
         Serial.println("read handler");
-	if (strstr(data, "shutdown") == data) {
-		shutdown();
-	} else { 
+	//if (strstr(data, "shutdown") == data) {
+	//	shutdown();
+	//} else { 
 		/* Write code here. */
                 Serial.println("AHHHHHHHHHHHHHHHHHH");
-	}
+	//}
 }
 
 /* Reads data from master
@@ -125,7 +114,9 @@ void read_handler(char *data) {
  */
 void read_data() {
 	if (rf24.available()) {
+                digitalWrite(9, !digitalRead(9));
 		rf24.read(read_buffer, RF24_TRANSFER_SIZE);
+                
                 Serial.println("OHHHHHHHHHHHHH");
 		if (read_buffer[0] == MY_ADDR) {
 			read_handler(read_buffer + 2);

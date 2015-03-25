@@ -119,8 +119,9 @@ uint8_t send_sensor(uint8_t id, char *data) {
 	rf24.setTransmitMode();
 	rf24.setTxAddress(pipe_addr, paddr_size);
 	uint8_t num_received = 0;
-	num_received = rf24.write(NRF24L01P_PIPE_P0, "hihihihihi", RF24_TRANSFER_SIZE);
+	num_received = rf24.write(NRF24L01P_PIPE_P0, send_buffer, RF24_TRANSFER_SIZE);
 	rf24.setReceiveMode();
+	pc.printf("sent.\r\n");
 	return num_received;
 }
 /* Process RF24 input and send it to the correct handler. */

@@ -870,7 +870,7 @@ int nRF24L01P::write(int pipe, char *data, int count) {
     wait_us(_NRF24L01P_TIMING_Thce_us);
     disable();
 		int c = 0;
-		int limit = 10;
+		int limit = 100;
     while ( !( getStatusRegister() & _NRF24L01P_STATUS_TX_DS ) && c < limit) {
 				c += 1;
 				//printf("ho\r\n");
