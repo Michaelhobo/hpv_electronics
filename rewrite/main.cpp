@@ -29,6 +29,8 @@ void readData(){
 	}
 }
 
+
+
 void sendDataToArduino(char* sendData){
 	//i2c.start();
 	//bool fail = i2c.write(ArduinoAddress, sendData, TRANSFER_SIZE);
