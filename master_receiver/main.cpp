@@ -115,7 +115,7 @@ uint8_t send_sensor(uint8_t id, char *data) {
 	pc.printf("send_sensor\r\n");
 	send_buffer[0] = id;
 	sprintf(send_buffer + 1, "%s", data);
-	uint64_t pipe_addr = 0x01F0F0F0F1;//0x00F0F0F0F1 | (1LL << 32);
+	uint64_t pipe_addr = 0x01F0F0F0F1LL;//0x00F0F0F0F1 | (1LL << 32);
 	rf24.setTransmitMode();
 	rf24.setTxAddress(pipe_addr, paddr_size);
 	uint8_t num_received = 0;
