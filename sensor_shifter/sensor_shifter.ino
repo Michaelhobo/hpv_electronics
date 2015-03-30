@@ -13,7 +13,6 @@ int serial_console_putc(char c, FILE *) {
 	Serial.write(c);
 	return 0;
 }
-yes
 uint8_t state; //state that the sensor is in. 0 = connected, 1 = connected, 2 = sleep
 char *name = "template";
 uint64_t master_general_address = ((MY_ADDR % 4) + 2) & 0x00F0F0F0F0; //master will read on this address
@@ -44,7 +43,8 @@ void setup() {
 	rf24.setPayloadSize(RF24_TRANSFER_SIZE);
 	rf24.setChannel(101);
 	rf24.setAutoAck(true);
-
+        uint64_t addr = 0x01F0F0F0F1;
+	rf24.openReadingPipe(0, addr);//0x00F0F0F0F1 | (1LL << 32));
 	/* For debugging, comment out when not needed. */
 	fdevopen(&serial_console_putc, NULL);
 	rf24.printDetails();
@@ -122,10 +122,12 @@ void shutdown() {
  * @data The data packet meant for this slave.
  */
 void read_handler(char *data) {
+        Serial.println("read handler");
 	if (strstr(data, "shutdown") == data) {
 		shutdown();
-	} else {
+	} else { 
 		/* Write code here. */
+                Serial.println("AHHHHHHHHHHHHHHHHHH");
 	}
 }
 
@@ -135,14 +137,16 @@ void read_handler(char *data) {
 void read_data() {
 	if (rf24.available()) {
 		rf24.read(read_buffer, RF24_TRANSFER_SIZE);
+                Serial.println("OHHHHHHHHHHHHH");
 		if (read_buffer[0] == MY_ADDR) {
 			read_handler(read_buffer + 2);
 		}
+                Serial.println("done");
 	}
 }
 void loop() {
 	// put your main code here, to run repeatedly
-	Serial.println("looping...");
+	//Serial.println("looping...");
 	if (state == DISCONNECTED) {
                 Serial.println("Disconnected");
 		if (!connect_master()) {
@@ -152,10 +156,10 @@ void loop() {
                     state = CONNECTED;
                 }
 	} else if (state == CONNECTED) {
-                Serial.println("Connected");
+                //Serial.println("Connected");
 		read_data();
-		write_data();
-		delay(1000);
+		//write_data();
+		//delay(1000);
 	} else if (state == SLEEP) {
                 Serial.println("Sleep");
 		delay(1000);
