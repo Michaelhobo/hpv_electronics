@@ -64,12 +64,12 @@ void init() {
 }
 
 /* Get updates from arduino. 
- * A '-' means the value has not been updated from last time.
+ * A 255 means the value has not been updated from last time.
  */
 void get_updates() {
 	arduino.read(read_addr, arduino_updates, NUM_SENSORS);
 	for (int i = 0; i < NUM_SENSORS; i++) {
-		if (arduino_updates[i] != '-') {
+		if (arduino_updates[i] != 255) {
 			switch (i) {
 				case 0:
 					speed = (double) ((uint8_t) arduino_updates[i] * 3.0 / 10.0); // speed converion 
