@@ -2,7 +2,6 @@
 #include <limits.h>
 #include <stdio.h>
 #include "xbee.h"
-#include "nRF24L01P.h"
 #include "constants/constants.h"
 #include "main.h"
 
