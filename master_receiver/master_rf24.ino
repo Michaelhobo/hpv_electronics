@@ -21,7 +21,6 @@ void setup() {
 	rf24.openReadingPipe(1, 0x00F0F0F0F0LL);
 	rf24.setRetries(15,15);
 	rf24.setPayloadSize(RF24_TRANSFER_SIZE);
-	rf24.setChannel(101);
 	rf24.startListening();
 }
 
