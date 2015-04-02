@@ -19,10 +19,10 @@
 
 
 /* Actuator count goes like this:
-0 - gear shifter
-1 - front light
-2 - rear lights
-3 - landing gear
+g - gear shifter
+f - front light
+r - rear lights
+l - landing gear
 */
 #define NUM_ACTUATORS 4
 
