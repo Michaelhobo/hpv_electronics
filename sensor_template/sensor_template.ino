@@ -12,7 +12,7 @@ uint8_t state; //state that the sensor is in. 0 = connected, 1 = connected, 2 = 
 uint8_t missed = 0;
 uint64_t master_address = 0x00F0F0F0F0LL;
 
-char write_buffer[RF24_TRANSFER_SIZE + 1];
+char write_buffer[RF24_TRANSFER_SIZE];
 char *w_data;
 /* Run setup code. */
 void setup() {
@@ -37,7 +37,7 @@ bool write_data() {
 	/* Write code here. */
 	rf24.stopListening();
 	bool received = false;
-	received = rf24.write(write_buffer, sizeof(char) * (RF24_TRANSFER_SIZE+1));
+	received = rf24.write(write_buffer, sizeof(char) * (RF24_TRANSFER_SIZE));
 	if (received) {
 		Serial.println("write ok...\n\r"); 
 	} else  {

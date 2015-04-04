@@ -1,4 +1,4 @@
-#define RF24_TRANSFER_SIZE 1
+#define RF24_TRANSFER_SIZE 2
 #define paddr_size 5
 #define DISCONNECTED 0
 #define CONNECTED 1
