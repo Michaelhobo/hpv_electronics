@@ -5,21 +5,18 @@
 #include "println.h"
 #include "constants.h"
 
-#define MY_ADDR 1
+#define MY_ADDR 't'
 RF24 rf24(8,7); //change to 7,8 because 9,10 are pwm pins
 
 uint8_t state; //state that the sensor is in. 0 = connected, 1 = connected, 2 = sleep
 uint8_t missed = 0;
 uint64_t master_address = 0x00F0F0F0F0LL;
 
-char write_buffer[RF24_TRANSFER_SIZE + 1];
-char *w_data;
+char read_buffer[RF24_TRANSFER_SIZE];
 /* Run setup code. */
 void setup() {
 	Serial.begin(9600);
 	state = CONNECTED;
-	write_buffer[0] = MY_ADDR;
-	w_data = (char *) (write_buffer + 1);
 	rf24.begin();
 	rf24.setPayloadSize(RF24_TRANSFER_SIZE);
 	rf24.openReadingPipe(1, 0xF0F0F0F000LL | MY_ADDR);
@@ -33,7 +30,7 @@ void setup() {
  * Comment out the write_data line in loop function if not needed.
  * Write data to write_data, which can store a max of (RF24_TRANSFER_SIZE - 1) bytes/chars.
  */
-bool write_data() {
+bool ping_master() {
 	/* Write code here. */
 	rf24.stopListening();
 	bool received = false;

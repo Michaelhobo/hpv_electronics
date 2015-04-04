@@ -1,15 +1,17 @@
 #include <SPI.h>
-#include <nRF24L01.h>
-#include <RF24.h>
-#define RF24_TRANSFER_SIZE 32
+#include "nRF24L01.h"
+#include <stdio.h>
+#include "RF24.h"
+#include "println.h"
+#include "constants.h"
+
 #define MY_ADDR 1
 RF24 rf24(8,7); //change to 7,8 because 9,10 are pwm pins
 
-
 /* For serial debugging. */
 int serial_console_putc(char c, FILE *) {
-  Serial.write(c);
-  return 0;
+	Serial.write(c);
+	return 0;
 }
 uint8_t state; //state that the sensor is in. 0 = connected, 1 = connected, 2 = sleep
 char *name = "template";
@@ -20,11 +22,6 @@ char write_buffer[RF24_TRANSFER_SIZE];
 char *w_data;
 /* Run setup code. */
 void setup() {
-  Serial.begin(9600);
-  Serial.println("setup");
-  rf24.begin();
-  connect_master();
-	
 	Serial.begin(9600);
 	state = DISCONNECTED;
 	write_buffer[0] = MY_ADDR;
@@ -43,47 +40,6 @@ void setup() {
 	rf24.printDetails();
 }
 
-char *name = "speed";
-uint64_t master_general_address; //master will read on this address
-uint64_t master_connection_address = 0x0000000001; //this is the address we write to connect to the master
-char read_buffer[RF24_TRANSFER_SIZE];
-char write_buffer[RF24_TRANSFER_SIZE];
-
-void connect_master() {
-  //send, listen, send, listen.... until we get a response from master
-  //master uses pipe1 to establish connections, use pipe2 to flood out to all sensors, pipe3 to connect to privileged sensors, pipe4 to receive in
-  Serial.println("connect master");
-	char *start_msg = (char *) malloc(32);
-  Serial.println("malloc");
-	sprintf(start_msg, "%c%c%s", 0, MY_ADDR, "connect");
-  Serial.println("sprintf");
-  rf24.openWritingPipe(master_connection_address);
-  Serial.println("openwritingpipe");
-  rf24.write(start_msg, strlen(start_msg));
-  rf24.openReadingPipe(1, 0x0000000101);
-  rf24.startListening();
-  Serial.println("StartListening");
-  bool not_connected = true;
-  while (not_connected) {
-		Serial.println("connecting with master");
-    if (rf24.available()) {
-			Serial.print("waiting for master...");
-      rf24.read(read_buffer, RF24_TRANSFER_SIZE);
-      not_connected = false;
-    } else {
-      delay(500);
-			Serial.print("waiting for master again...");
-      if (rf24.available()) {
-        rf24.read(read_buffer, RF24_TRANSFER_SIZE);
-        not_connected = false;
-      } else {
-				Serial.println("problems encountered, retrying.");
-				rf24.stopListening();
-				rf24.write(start_msg, strlen(start_msg));
-				rf24.startListening();
-			}
-    }
-  }
 
 bool connect_master() {
 	Serial.print("connecting master...");
@@ -129,12 +85,11 @@ bool connect_master() {
 /* Writes data to master
  * Use this for sensor-type slaves that gather data locally and send to the master
  * Comment out the write_data line in loop function if not needed.
+ * Write data to write_data, which can store a max of (RF24_TRANSFER_SIZE - 1) bytes/chars.
  */
 void write_data() {
 	/* Write code here. */
 	rf24.stopListening();
-	rf24.write(write_buffer, RF24_TRANSFER_SIZE);
-	rf24.startListening();
 	bool received = false;
 	while (!received) {
 		received = rf24.write(write_buffer, sizeof(char) * 10);
@@ -157,19 +112,12 @@ void shutdown() {
  * @data The data packet meant for this slave.
  */
 void read_handler(char *data) {
-
-	if (strstr(data, "shutdown") == data) {
-		shutdown();
-	} else {
-		/* Write code here. */
-
 	Serial.println("read handler");
 	if (strstr(data, "shutdown") == data) {
 		shutdown();
 	} else { 
 		/* Write code here. */
 		Serial.println("AHHHHHHHHHHHHHHHHHH");
-
 	}
 }
 
@@ -179,20 +127,6 @@ void read_handler(char *data) {
 void read_data() {
 	if (rf24.available()) {
 		rf24.read(read_buffer, RF24_TRANSFER_SIZE);
-
-		if (read_buffer[0] == MY_ADDR) {
-			read_handler(read_buffer + 2);
-		}
-	}
-	
-}
-void loop() {
-  // put your main code here, to run repeatedly:
-	//send, sleep, send, sleep...
-	Serial.println("looping");
-	read_data();
-	write_data();
-
 		Serial.println("OHHHHHHHHHHHHH");
 		if (read_buffer[0] == MY_ADDR) {
 			read_handler(read_buffer + 2);
@@ -235,3 +169,4 @@ void loop() {
 		}
 	}
 }
+
