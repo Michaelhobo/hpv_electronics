@@ -12,7 +12,7 @@
 
 int ledPin = 4;
 char sensor_data[NUM_SENSORS];
-char rf24_in[RF24_TRANSFER_SIZE + 1];
+char rf24_in[RF24_TRANSFER_SIZE];
 RF24 rf24  (8, 7);
 void setup() {
 	/* I2C setup */
@@ -28,7 +28,8 @@ void setup() {
 	rf24.startListening();
 
         /* Serial Setup */
-        Serial.begin(9600);
+        Serial.begin(57600);
+        Serial.println("Arduino Master Receiver");
         
         pinMode(ledPin, OUTPUT);
 }
@@ -52,9 +53,11 @@ void send_slave(uint8_t id, char data) {
 /* Send updates back to the master controller. */
 void send_update() {
 	Wire.write(sensor_data, NUM_SENSORS);
+        Serial.print("got request from master...");
 	for (int i = 0; i < NUM_SENSORS; i++) {
 		sensor_data[i] = 255;
 	}
+        Serial.println("sent updates back");
 }
 
 void lightblink()
@@ -88,7 +91,8 @@ void blink3()
 
 void loop() {
 	if (rf24.available()) {
-		rf24.read(rf24_in, RF24_TRANSFER_SIZE + 1);
+                Serial.println("rf24 data avilable");
+		rf24.read(rf24_in, RF24_TRANSFER_SIZE);
 		switch (rf24_in[0]) {
 			case 0: //speed
 				sensor_data[0] = rf24_in[1];

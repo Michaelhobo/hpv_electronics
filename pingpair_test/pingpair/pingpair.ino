@@ -38,7 +38,8 @@ const int addr_pin = 5;
 
 // Radio pipe addresses for the 2 nodes to communicate.
 //const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL, 0xF0F0F0F0D2LL };
-const uint64_t pipes[3] = { 0x01F0F0F0F0LL, 0x02F0F0F0F0LL, 0x03F0F0F0F0LL };
+//const uint64_t pipes[3] = { 0x01F0F0F0F0LL, 0x02F0F0F0F0LL, 0x03F0F0F0F0LL };
+const uint64_t pipes[3] = { 0xF0F0F0F000LL | 0, 0x00F0F0F0F0LL, 0xF0F0F0F000LL | 1};
 
 //
 // Role management

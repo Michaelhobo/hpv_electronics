@@ -16,7 +16,7 @@ char write_buffer[RF24_TRANSFER_SIZE];
 char *w_data;
 /* Run setup code. */
 void setup() {
-	Serial.begin(9600);
+	Serial.begin(57600);
 	state = CONNECTED;
 	write_buffer[0] = MY_ADDR;
 	w_data = (char *) (write_buffer + 1);
@@ -26,6 +26,8 @@ void setup() {
 	rf24.openWritingPipe(0x00F0F0F0F0LL);
 	rf24.setRetries(15, 15);
 	rf24.startListening();
+        write_buffer[0] = 'h';
+        write_buffer[1] = 'o';
 }
 
 /* Writes data to master
@@ -43,7 +45,7 @@ bool write_data() {
 	} else  {
 		Serial.println("write failed.\n\r");
 	}
-	delay(100);
+	//delay(100);
 	rf24.startListening();
 	return received;
 }

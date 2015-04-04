@@ -61,12 +61,14 @@ bool landing_gear = false;
 void init() {
 	pc.printf("Human Powered Vehicle Controller");
 	critical.rise(&get_updates);
+	events.attach(&get_updates, 1);
 }
 
 /* Get updates from arduino. 
  * A 255 means the value has not been updated from last time.
  */
 void get_updates() {
+	pc.printf("get_updates() ...");
 	arduino.read(read_addr, arduino_updates, NUM_SENSORS);
 	for (int i = 0; i < NUM_SENSORS; i++) {
 		if (arduino_updates[i] != 255) {
@@ -86,6 +88,7 @@ void get_updates() {
 			}
 		}
 	}
+	pc.printf("done\n\r");
 }
 
 /* Send to a sensor with an id. */
