@@ -12,7 +12,13 @@
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
-#include "printf.h"o
+//#include " .h"
+//#include "println.h"
+#include "constants.h"
+
+#define MYADDR 0;
+
+char write_buffer[RF24_TRANSFER_SIZE];
 
 //
 // Hardware configuration
@@ -26,7 +32,6 @@ RF24 radio(8, 7);
 // Radio pipe addresses for the 2 nodes to communicate.
 //const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL, 0xF0F0F0F0D2LL };
 //const uint64_t pipes[3] = { 0x01F0F0F0F0LL, 0x02F0F0F0F0LL, 0x03F0F0F0F0LL };
-const uint64_t pipes[3] = { 0xF0F0F0F000LL | 0, 0x00F0F0F0F0LL, 0xF0F0F0F000LL | 1};
 
 
 // The various roles supported by this sketch
@@ -35,8 +40,8 @@ const uint64_t pipes[3] = { 0xF0F0F0F000LL | 0, 0x00F0F0F0F0LL, 0xF0F0F0F000LL |
 const char* role_friendly_name[] = { "invalid", "Ping out"};
 
 // The role of the current running sketch
-
-bool last;
+const uint64_t masterAddress = 0x00F0F0F0F0LL;
+const uint64_t myAddress = 0xF0F0F0F000LL | MYADDR;
 #define NUM_SENSORS 4
 
 char sensor_data[NUM_SENSORS];
@@ -49,7 +54,6 @@ void setup(void)
   //
 
   Serial.begin(57600);
-  printf_begin();
 
   //
   // Setup and configure rf radio
@@ -73,28 +77,16 @@ void setup(void)
   // Open 'our' pipe for writing
   // Open the 'other' pipe for reading, in position #1 (we can have up to 5 pipes open for reading)
 
-    //radio.openWritingPipe(pipes[0]);
-    radio.openReadingPipe(1,pipes[1]);
-    last = false;
+    radio.openReadingPipe(1,myAddress);
+    radio.openWritingPipe(masterAddress);
 
   //
   // Start listening
   //
 
   radio.startListening();
-
-  //
-  // Dump the configuration of the rf unit for debugging
-  //
-
-  radio.printDetails();
 }
 
-void on_receive(int dataSize) {
-	uint8_t id = (uint8_t) Wire.read();
-	char data = Wire.read();
-	//send_slave(id, data);
-}
 
 
 void loop(void)
@@ -102,30 +94,21 @@ void loop(void)
   //
   // Ping out role.  Repeatedly send the current time
   //
-
+//    Serial.println("It does go through loop...");
      // First, stop listening so we can talk.
     radio.stopListening();
-    if (last) {
-      radio.openWritingPipe(pipes[0]);
-      printf("Sending to 1\n\r");
-    } else {
-      radio.openWritingPipe(pipes[2]);
-      printf("Sending to 2\n\r");
-    }
-    last = !last;
+    Serial.println("Sent");
     // Take the time, and send it.  This will block until complete
     unsigned long time = millis();
-    printf("Now sending %lu...",time);
-    bool ok = radio.write( &time, sizeof(unsigned long) );
+    /*bool ok = radio.write( &time, sizeof(unsigned long) );
     
     if (ok)
-      printf("ok...");
+        Serial.println("ok...");
     else
-      printf("failed.\n\r");
-
+       Serial.println("failed.\n\r");
+*/
     // Now, continue listening
     radio.startListening();
-
     // Wait here until we get a response, or timeout (250ms)
     unsigned long started_waiting_at = millis();
     bool timeout = false;
@@ -136,7 +119,7 @@ void loop(void)
     // Describe the results
     if ( timeout )
     {
-      printf("Failed, response timed out.\n\r");
+       Serial.println("Failed, response timed out.\n\r");
     }
     else
     {
@@ -145,7 +128,6 @@ void loop(void)
       radio.read( &got_time, sizeof(unsigned long) );
 
       // Spew it
-      printf("Got response %lu, round-trip delay: %lu\n\r",got_time,millis()-got_time);
     }
 
     // Try again 1s later
