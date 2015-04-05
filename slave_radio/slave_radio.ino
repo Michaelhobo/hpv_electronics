@@ -19,27 +19,9 @@
 #define MYADDR 0;
 
 char write_buffer[RF24_TRANSFER_SIZE];
-
-//
-// Hardware configuration
-//
-
-// Set up nRF24L01 radio on SPI bus plus pins 9 & 10
-
 RF24 radio(8, 7);
 
 
-// Radio pipe addresses for the 2 nodes to communicate.
-//const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL, 0xF0F0F0F0D2LL };
-//const uint64_t pipes[3] = { 0x01F0F0F0F0LL, 0x02F0F0F0F0LL, 0x03F0F0F0F0LL };
-
-
-// The various roles supported by this sketch
-
-// The debug-friendly names of those roles
-const char* role_friendly_name[] = { "invalid", "Ping out"};
-
-// The role of the current running sketch
 const uint64_t masterAddress = 0x00F0F0F0F0LL;
 const uint64_t myAddress = 0xF0F0F0F000LL | MYADDR;
 #define NUM_SENSORS 4
@@ -54,18 +36,10 @@ void setup(void)
   //
 
   Serial.begin(57600);
-
-  //
-  // Setup and configure rf radio
-  //
-
   radio.begin();
-
-  // optionally, increase the delay between retries & # of retries
   radio.setRetries(15,15);
 
-  // optionally, reduce the payload size.  seems to
-  // improve reliability
+
   radio.setPayloadSize(RF24_TRANSFER_SIZE);
 
   //
@@ -80,13 +54,25 @@ void setup(void)
     radio.openReadingPipe(1,myAddress);
     radio.openWritingPipe(masterAddress);
 
-  //
-  // Start listening
-  //
-
+  write_buffer[0] = 'h';
+  write_buffer[1] = 'o';
   radio.startListening();
 }
 
+bool write_data() {
+	/* Write code here. */
+	radio.stopListening();
+	bool received = false;
+	received = radio.write(write_buffer, sizeof(char) * (RF24_TRANSFER_SIZE));
+	if (received) {
+		Serial.println("write ok...\n\r"); 
+	} else  {
+		Serial.println("write failed.\n\r");
+	}
+	//delay(100);
+	radio.startListening();
+	return received;
+}
 
 
 void loop(void)
@@ -100,7 +86,8 @@ void loop(void)
     Serial.println("Sent");
     // Take the time, and send it.  This will block until complete
     unsigned long time = millis();
-    bool ok = radio.write( &time, sizeof(unsigned long) );
+    bool ok = radio.write( write_buffer, RF24_TRANSFER_SIZE );
+
     
     if (ok)
         Serial.println("ok...");
