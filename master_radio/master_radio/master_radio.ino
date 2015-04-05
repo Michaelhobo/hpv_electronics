@@ -68,9 +68,9 @@ void loop(void)
       {
         // Fetch the payload, and see if this was the last one.
         done = radio.read(rf24_buffer, RF24_TRANSFER_SIZE);
-
         // Spew it
         Serial.print("Got payload ...");
+        Serial.print(rf24_buffer);
 
 	// Delay just a little bit to let the other unit
 	// make the transition to receiver
@@ -82,7 +82,7 @@ void loop(void)
 
     // Send the final one back.
     radio.write( rf24_buffer, RF24_TRANSFER_SIZE );
-    Serial.println("Sent response.\n\r");
+    Serial.println("...Sent response.\n\r");
 
     // Now, resume listening so we catch the next packets.
     radio.startListening();
