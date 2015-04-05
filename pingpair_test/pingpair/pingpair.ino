@@ -1,3 +1,5 @@
+#include <Wire.h>
+
 /*
  Copyright (C) 2011 J. Coliz <maniacbug@ymail.com>
 
@@ -18,7 +20,7 @@
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
-#include "printf.h"
+#include "printf.h"o
 
 //
 // Hardware configuration
@@ -60,6 +62,9 @@ const char* role_friendly_name[] = { "invalid", "Ping out", "Pong back"};
 // The role of the current running sketch
 role_e role;
 bool last;
+#define NUM_SENSORS 4
+
+char sensor_data[NUM_SENSORS];
 
 void setup(void)
 {
@@ -113,6 +118,9 @@ void setup(void)
 
   if ( role == role_ping_out )
   {
+		Wire.begin(7);
+		Wire.onReceive(on_receive);
+		Wire.onRequest(send_update);
     //radio.openWritingPipe(pipes[0]);
     radio.openReadingPipe(1,pipes[1]);
     last = false;
@@ -139,6 +147,21 @@ void setup(void)
   //
 
   radio.printDetails();
+}
+
+void on_receive(int dataSize) {
+	uint8_t id = (uint8_t) Wire.read();
+	char data = Wire.read();
+	//send_slave(id, data);
+}
+
+void send_update() {
+	Wire.write(sensor_data, NUM_SENSORS);
+	Serial.print("got request from master...");
+	for (int i = 0; i < NUM_SENSORS; i++) {
+		sensor_data[i] = 255;
+	}
+	Serial.println("sent updates back");
 }
 
 void loop(void)
