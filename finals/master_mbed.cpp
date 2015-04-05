@@ -25,10 +25,11 @@
 /* Actuator count goes like this:
 g - gear shifter
 f - front light
-r - rear lights
+r - right turn
+t - left turn
 l - landing gear
 */
-#define NUM_ACTUATORS 4
+#define NUM_ACTUATORS 5
 
 DigitalOut led1(LED1);
 DigitalOut led2(LED2);
@@ -98,6 +99,7 @@ gear shifter = 'g'
 landing gear = 'l'
 right turn = 'r'
 left turn = 't'
+front light = 'f' //unused
 */
 
 void shift_up_fn() {
