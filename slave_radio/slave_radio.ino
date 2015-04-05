@@ -66,7 +66,7 @@ void setup(void)
 
   // optionally, reduce the payload size.  seems to
   // improve reliability
-  radio.setPayloadSize(8);
+  radio.setPayloadSize(RF24_TRANSFER_SIZE);
 
   //
   // Open pipes to other nodes for communication
@@ -100,13 +100,13 @@ void loop(void)
     Serial.println("Sent");
     // Take the time, and send it.  This will block until complete
     unsigned long time = millis();
-    /*bool ok = radio.write( &time, sizeof(unsigned long) );
+    bool ok = radio.write( &time, sizeof(unsigned long) );
     
     if (ok)
         Serial.println("ok...");
     else
        Serial.println("failed.\n\r");
-*/
+
     // Now, continue listening
     radio.startListening();
     // Wait here until we get a response, or timeout (250ms)
