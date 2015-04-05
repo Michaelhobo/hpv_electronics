@@ -6,19 +6,19 @@
 
 
 RF24 rf24(8,7); //change to 7,8 because 9,10 are pwm pins
-
+/*
 Servo servo1;
 const int servo_pin = 9;
 uint8_t gear_positions[11] = {180, 162, 144, 126, 108, 90, 72, 54, 36, 18, 0};
-
+*/
 /* For serial debugging. */
 int serial_console_putc(char c, FILE *) {
     Serial.write(c);
     return 0;
 }
 
-const uint64_t master_address = 0xF0F0F0F000LL;   // Address of the main controller.
-const uint64_t servo_address = 0xF0F0F0F010LL;    // Address of this controller.
+const uint64_t master_address = 0x00F0F0F0F0LL;   // Address of the main controller.
+const uint64_t servo_address = 0xF0F0F0F000LL | 'g';    // Address of this controller.
 const int PAYLOAD = 1;
 
 
