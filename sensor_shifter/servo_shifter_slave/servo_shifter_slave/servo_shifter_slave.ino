@@ -16,8 +16,8 @@ int serial_console_putc(char c, FILE *) {
     return 0;
 }
 
-const uint64_t master_address = 0xF0F0F0F000LL;   // Address of the main controller.
-const uint64_t servo_address = 0xF0F0F0F010LL;    // Address of this controller.
+const uint64_t master_address = 0x00F0F0F0F0LL;   // Address of the main controller.
+const uint64_t servo_address = 0xF0F0F0F000LL | 'g';    // Address of this controller.
 const int PAYLOAD = 1;
 
 
