@@ -19,6 +19,7 @@
 #define MYADDR 0;
 
 char write_buffer[RF24_TRANSFER_SIZE];
+char read_buffer[RF24_TRANSFER_SIZE];
 RF24 radio(8, 7);
 
 
@@ -110,11 +111,7 @@ void loop(void)
     }
     else
     {
-      // Grab the response, compare, and send to debugging spew
-      unsigned long got_time;
-      radio.read( &got_time, sizeof(unsigned long) );
-
-      // Spew it
+      radio.read( read_buffer, RF24_TRANSFER_SIZE );
     }
 
     // Try again 1s later
