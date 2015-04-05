@@ -10,6 +10,7 @@
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
+#include "constants.h"
 
 RF24 radio(8, 7);
 
@@ -17,6 +18,7 @@ RF24 radio(8, 7);
 
 const uint64_t rf24_addr = 0x00F0F0F0F0LL;
 char sensor_data[NUM_SENSORS];
+char rf24_buffer[RF24_TRANSFER_SIZE];
 
 void setup(void)
 {
@@ -30,11 +32,8 @@ void setup(void)
 
   /* Set up RF24 Radio. */
   radio.begin();
-  // optionally, increase the delay between retries & # of retries
-  radio.setRetries(15,15);
-  // optionally, reduce the payload size.  seems to
-  // improve reliability
-  radio.setPayloadSize(8);
+  radio.setRetries(15,15); //(retry interval, retry number)
+  radio.setPayloadSize(RF24_TRANSFER_SIZE);
   radio.openWritingPipe((const uint64_t) 0xF0F0F0F000LL);
   radio.openReadingPipe(1,rf24_addr);
   radio.startListening();
@@ -49,7 +48,7 @@ void on_receive(int dataSize) {
 	//send_slave(id, data);
 }
 
-
+/* Send an update back to the master. */
 void send_update() {
   Wire.write(sensor_data, NUM_SENSORS);
   Serial.print("got request from master...");
@@ -64,13 +63,11 @@ void loop(void)
     // if there is data ready
     if ( radio.available() )
     {
-      // Dump the payloads until we've gotten everything
-      unsigned long got_time;
       bool done = false;
       while (!done)
       {
         // Fetch the payload, and see if this was the last one.
-        done = radio.read( &got_time, sizeof(unsigned long) );
+        done = radio.read(rf24_buffer, RF24_TRANSFER_SIZE);
 
         // Spew it
         Serial.print("Got payload ...");
@@ -84,7 +81,7 @@ void loop(void)
     radio.stopListening();
 
     // Send the final one back.
-    radio.write( &got_time, sizeof(unsigned long) );
+    radio.write( rf24_buffer, RF24_TRANSFER_SIZE );
     Serial.println("Sent response.\n\r");
 
     // Now, resume listening so we catch the next packets.
