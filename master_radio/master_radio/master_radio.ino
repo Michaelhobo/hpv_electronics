@@ -1,5 +1,3 @@
-#include <Wire.h>
-
 /*
  Copyright (C) 2011 J. Coliz <maniacbug@ymail.com>
 
@@ -8,59 +6,22 @@
  version 2 as published by the Free Software Foundation.
  */
 
-/**
- * Example RF Radio Ping Pair
- *
- * This is an example of how to use the RF24 class.  Write this sketch to two different nodes,
- * connect the role_pin to ground on one.  The ping node sends the current time to the pong node,
- * which responds by sending the value back.  The ping node can then see how long the whole cycle
- * took.
- */
-
+#include <Wire.h>
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
-#include "printf.h"o
-
-//
-// Hardware configuration
-//
-
-// Set up nRF24L01 radio on SPI bus plus pins 9 & 10
 
 RF24 radio(8, 7);
-// Topology
-//
-
-// Radio pipe addresses for the 2 nodes to communicate.
-//const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL, 0xF0F0F0F0D2LL };
-//const uint64_t pipes[3] = { 0x01F0F0F0F0LL, 0x02F0F0F0F0LL, 0x03F0F0F0F0LL };
-const uint64_t pipes[3] = { 0xF0F0F0F000LL | 0, 0x00F0F0F0F0LL, 0xF0F0F0F000LL | 1};
-
-//
-// Role management
-//
-// Set up role.  This sketch uses the same software for all the nodes
-// in this system.  Doing so greatly simplifies testing.  The hardware itself specifies
-// which node it is.
-//
-// This is done through the role_pin
-//
 
 #define NUM_SENSORS 4
 
+uint64_t rf24_addr = 0x00F0F0F0F0LL;
 char sensor_data[NUM_SENSORS];
 
 void setup(void)
 {
 
-  //
-  // Print preamble
-  //
-
   Serial.begin(57600);
-  printf_begin();
-  printf("\n\rRF24/examples/pingpair/\n\r");
 
   /* Set up I2C. */
   Wire.begin(7);
@@ -74,10 +35,9 @@ void setup(void)
   // optionally, reduce the payload size.  seems to
   // improve reliability
   radio.setPayloadSize(8);
-    radio.openWritingPipe(pipes[1]);
-    radio.openReadingPipe(1,pipes[0]);
+  radio.openWritingPipe((uint64_t) 0xF0F0F0F000LL);
+  radio.openReadingPipe(1,rf24_addr);
   radio.startListening();
-  radio.printDetails();
 }
 
 /* Send data to slave.
