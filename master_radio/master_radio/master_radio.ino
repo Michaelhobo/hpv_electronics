@@ -15,7 +15,7 @@ RF24 radio(8, 7);
 
 #define NUM_SENSORS 4
 
-uint64_t rf24_addr = 0x00F0F0F0F0LL;
+const uint64_t rf24_addr = 0x00F0F0F0F0LL;
 char sensor_data[NUM_SENSORS];
 
 void setup(void)
@@ -35,7 +35,7 @@ void setup(void)
   // optionally, reduce the payload size.  seems to
   // improve reliability
   radio.setPayloadSize(8);
-  radio.openWritingPipe((uint64_t) 0xF0F0F0F000LL);
+  radio.openWritingPipe((const uint64_t) 0xF0F0F0F000LL);
   radio.openReadingPipe(1,rf24_addr);
   radio.startListening();
 }
