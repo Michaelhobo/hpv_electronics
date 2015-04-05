@@ -39,7 +39,18 @@ void setup(void)
   radio.begin();
   radio.setRetries(15,15);
 
+
   radio.setPayloadSize(RF24_TRANSFER_SIZE);
+
+  //
+  // Open pipes to other nodes for communication
+  //
+
+  // This simple sketch opens two pipes for these two nodes to communicate
+  // back and forth.
+  // Open 'our' pipe for writing
+  // Open the 'other' pipe for reading, in position #1 (we can have up to 5 pipes open for reading)
+
     radio.openReadingPipe(1,myAddress);
     radio.openWritingPipe(masterAddress);
 
@@ -76,6 +87,7 @@ void loop(void)
     // Take the time, and send it.  This will block until complete
     unsigned long time = millis();
     bool ok = radio.write( write_buffer, RF24_TRANSFER_SIZE );
+
     
     if (ok)
         Serial.println("ok...");

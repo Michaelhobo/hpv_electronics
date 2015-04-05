@@ -34,14 +34,14 @@ bool ping_master() {
 	/* Write code here. */
 	rf24.stopListening();
 	bool received = false;
-		received = rf24.write(write_buffer, sizeof(char) * 10);
-		if (received) {
-			Serial.println("write ok...\n\r"); 
-		} else  {
-			Serial.println("write failed.\n\r");
-		}
-		delay(100);
-		rf24.startListening();
+	received = rf24.write(write_buffer, sizeof(char) * 10);
+	if (received) {
+		Serial.println("write ok...\n\r"); 
+	} else  {
+		Serial.println("write failed.\n\r");
+	}
+	delay(100);
+	rf24.startListening();
 	return received;
 }
 

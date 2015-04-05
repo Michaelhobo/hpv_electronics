@@ -73,7 +73,7 @@ void loop(void)
         done = radio.read( &got_time, sizeof(unsigned long) );
 
         // Spew it
-        printf("Got payload %lu...",got_time);
+        Serial.print("Got payload ...");
 
 	// Delay just a little bit to let the other unit
 	// make the transition to receiver
@@ -85,7 +85,7 @@ void loop(void)
 
     // Send the final one back.
     radio.write( &got_time, sizeof(unsigned long) );
-    printf("Sent response.\n\r");
+    Serial.println("Sent response.\n\r");
 
     // Now, resume listening so we catch the next packets.
     radio.startListening();
