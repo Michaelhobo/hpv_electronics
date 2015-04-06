@@ -1,38 +1,70 @@
+#include <Wire.h>
+
+/**
+ * Example RF Radio Ping Pair
+ *
+ * This is an example of how to use the RF24 class.  Write this sketch to two different nodes,
+ * connect the role_pin to ground on one.  The ping node sends the current time to the pong node,
+ * which responds by sending the value back.  The ping node can then see how long the whole cycle
+ * took.
+ */
+
 #include <SPI.h>
 #include "nRF24L01.h"
-#include <stdio.h>
 #include "RF24.h"
-#include "println.h"
+//#include " .h"
+//#include "println.h"
 #include "constants.h"
 
-#define MY_ADDR 't'
-RF24 rf24(8,7); //change to 7,8 because 9,10 are pwm pins
+#define MYADDR 0;
 
-uint8_t state; //state that the sensor is in. 0 = connected, 1 = connected, 2 = sleep
-uint8_t missed = 0;
-uint64_t master_address = 0x00F0F0F0F0LL;
-
+char write_buffer[RF24_TRANSFER_SIZE];
 char read_buffer[RF24_TRANSFER_SIZE];
-/* Run setup code. */
-void setup() {
-	Serial.begin(9600);
-	state = CONNECTED;
-	rf24.begin();
-	rf24.setPayloadSize(RF24_TRANSFER_SIZE);
-	rf24.openReadingPipe(1, 0xF0F0F0F000LL | MY_ADDR);
-	rf24.openWritingPipe(0x00F0F0F0F0LL);
-	rf24.setRetries(15, 15);
-	rf24.startListening();
+RF24 radio(8, 7);
+uint8_t missed = 0;
+uint8_t state;
+
+const uint64_t masterAddress = 0x00F0F0F0F0LL;
+const uint64_t myAddress = 0xF0F0F0F000LL | MYADDR;
+#define NUM_SENSORS 4
+
+char sensor_data[NUM_SENSORS];
+
+void setup(void)
+{
+
+  //
+  // Print preamble
+  //
+
+  Serial.begin(57600);
+  radio.begin();
+  radio.setRetries(15,15);
+  state = CONNECTED;
+
+
+  radio.setPayloadSize(RF24_TRANSFER_SIZE);
+
+  //
+  // Open pipes to other nodes for communication
+  //
+
+  // This simple sketch opens two pipes for these two nodes to communicate
+  // back and forth.
+  // Open 'our' pipe for writing
+  // Open the 'other' pipe for reading, in position #1 (we can have up to 5 pipes open for reading)
+
+    radio.openReadingPipe(1,myAddress);
+    radio.openWritingPipe(masterAddress);
+
+  radio.startListening();
 }
 
-/* Writes data to master
- * Use this for sensor-type slaves that gather data locally and send to the master
- * Comment out the write_data line in loop function if not needed.
- * Write data to write_data, which can store a max of (RF24_TRANSFER_SIZE - 1) bytes/chars.
- */
+void shutdown_all(){
+  /* For future work niggas */
+}
+
 bool ping_master() {
-	/* Write code here. */
-	rf24.stopListening();
 	bool received = false;
 	received = rf24.write(write_buffer, sizeof(char) * 10);
 	if (received) {
@@ -40,52 +72,83 @@ bool ping_master() {
 	} else  {
 		Serial.println("write failed.\n\r");
 	}
-	delay(100);
-	rf24.startListening();
 	return received;
 }
 
-/* Shut down this sensor. */
-void shutdown() {
-
-	//power down antenna, set all unused pins low, put microcontroller to sleep for 1/2(?) second then wake up
+void manipulate_data(char* data){
+    if (data[0] == 'b'){
+      if (data[1] == 's'){
+        shutdown_all();
+      }
+      else{
+        /* Code here please */
+      }
+    }
 }
 
-void loop() {
-	if (state == CONNECTED) {
-		Serial.println("Connected");
-		if (!write_data()) {
-			missed += 1;
-			if (missed > 3) {
-				state = SLEEP;
-				missed = 0;
-			}
-		} else {
+
+
+bool read_data() {
+	while (radio.available()){
+            bool hasRead = radio.read(read_buffer, RF24_TRANSFER_SIZE);
+            if (hasRead){
+              Serial.println("Successfully read data");
+              manipulate_data(&read_buffer);
+            }
+            else{
+              Serial.println("Fatal error in reading data");
+            }
+        }
+
+	//delay(100);
+	return received;
+}
+
+
+void loop(void)
+{    
+    read_data();
+    radio.stopListening();
+    bool ok = ping_master();
+    radio.startListening();
+    if (state == CONNECTED) {
+	Serial.println("Connected");
+	if (!ok) {
+		missed += 1;
+		if (missed > 3) {
+			state = SLEEP;
 			missed = 0;
 		}
-		delay(1000);
-	} else if (state == SLEEP) {
-		Serial.println("Sleep");
-		if (write_data()) {
-			state = CONNECTED;
-			missed = 0;
-		} else {
-			Serial.println("failed to connect");
-			missed += 1;
-			if (missed > 5) {
-				state = DEEP_SLEEP;
-				missed = 0;
-			}
-		}
-		delay(2000);
-	} else if (state == DEEP_SLEEP) {
-		Serial.println("Deep Sleep");
-		if (write_data()) {
-			state = CONNECTED;
-		} else {
-			Serial.println("failed to connect");
-		}
-		delay(5000);
+	} else {
+        	missed = 0;
 	}
+	delay(1000);
+    } else if (state == SLEEP) {
+	Serial.println("Sleep");
+	if (ok) {
+	    state = CONNECTED;
+            missed = 0;
+	} else {
+	    Serial.println("failed to connect");
+	    missed += 1;
+	    if (missed > 5) {
+	        state = DEEP_SLEEP;
+		missed = 0;
+	    }
+	}
+	delay(2000);
+    } else if (state == DEEP_SLEEP) {
+	Serial.println("Deep Sleep");
+	if (ok) {
+            state = CONNECTED;
+	} else {
+	    Serial.println("failed to connect");
+	}
+	delay(5000);
+   }
 }
 
+  //
+  // Pong back role.  Receive each packet, dump it out, and send it back
+  //
+// vim:cin:ai:sts=2 sw=2 ft=cpp
