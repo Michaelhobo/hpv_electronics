@@ -49,7 +49,7 @@ void on_receive(int dataSize) {
 }
 
 void send_slave(uint8_t id, char data) {
-  rf24_out[0] = id;
+  rf24_out[0] = 'b';
   rf24_out[1] = data;
   radio.stopListening();
   radio.openWritingPipe(base_addr | id);

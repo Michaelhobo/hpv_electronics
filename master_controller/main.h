@@ -3,3 +3,18 @@ void send_sensor(uint8_t id, char data);
 void init();
 
 void get_updates();
+
+void landing_up_fn();
+void landing_down_fn();
+void landing_auto_fn();
+void landing_auto();
+
+void shift_up_fn();
+void shift_down_fn();
+
+void turn_left_fn();
+void turn_right_fn();
+void off_left_fn();
+void off_right_fn();
+
+void update_lcd();

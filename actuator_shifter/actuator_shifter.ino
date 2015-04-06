@@ -1,5 +1,3 @@
-#include <Servo.h>
-
 #include <Wire.h>
 
 /**
@@ -10,9 +8,6 @@
  * which responds by sending the value back.  The ping node can then see how long the whole cycle
  * took.
  */
-const int servo_pin = 9;
-uint8_t gear_positions[11] = {180, 162, 144, 126, 108, 90, 72, 54, 36, 18, 0};
-Servo servo1;
 
 #include <SPI.h>
 #include "nRF24L01.h"
@@ -21,7 +16,7 @@ Servo servo1;
 //#include "println.h"
 #include "constants.h"
 
-#define MYADDR 'g';
+#define MYADDR 0;
 
 char write_buffer[RF24_TRANSFER_SIZE];
 char read_buffer[RF24_TRANSFER_SIZE];
@@ -46,7 +41,7 @@ void setup(void)
   radio.begin();
   radio.setRetries(15,15);
   state = CONNECTED;
-  servo1.attach(9);
+
 
   radio.setPayloadSize(RF24_TRANSFER_SIZE);
 
@@ -71,7 +66,7 @@ void shutdown_all(){
 
 bool ping_master() {
 	bool received = false;
-	received = radio.write(write_buffer, sizeof(char) * 10);
+	received = rf24.write(write_buffer, sizeof(char) * 10);
 	if (received) {
 		Serial.println("write ok...\n\r"); 
 	} else  {
@@ -81,42 +76,79 @@ bool ping_master() {
 }
 
 void manipulate_data(char* data){
-    //if (data[0] == 'b'){
+    if (data[0] == 'b'){
       if (data[1] == 's'){
         shutdown_all();
       }
       else{
         /* Code here please */
-        uint8_t gear = data[1];
-        Serial.print("Switching to gear ");
-        Serial.println(gear);
-	servo1.write(gear_positions[gear - 1]);
       }
-    //}
+    }
 }
 
 
 
 bool read_data() {
-  bool hasRead;
-  while (radio.available()){
-            radio.read(read_buffer, RF24_TRANSFER_SIZE);
-//            if (hasRead){
+	while (radio.available()){
+            bool hasRead = radio.read(read_buffer, RF24_TRANSFER_SIZE);
+            if (hasRead){
               Serial.println("Successfully read data");
-              manipulate_data(read_buffer);
-//            }
-//            else{
-//              Serial.println("Fatal error in reading data");
-//            }
+              manipulate_data(&read_buffer);
+            }
+            else{
+              Serial.println("Fatal error in reading data");
+            }
         }
 
 	//delay(100);
-	return hasRead;
+	return received;
 }
 
 
 void loop(void)
 {    
     read_data();
+    radio.stopListening();
+    bool ok = ping_master();
+    radio.startListening();
+    if (state == CONNECTED) {
+	Serial.println("Connected");
+	if (!ok) {
+		missed += 1;
+		if (missed > 3) {
+			state = SLEEP;
+			missed = 0;
+		}
+	} else {
+        	missed = 0;
+	}
+	delay(1000);
+    } else if (state == SLEEP) {
+	Serial.println("Sleep");
+	if (ok) {
+	    state = CONNECTED;
+            missed = 0;
+	} else {
+	    Serial.println("failed to connect");
+	    missed += 1;
+	    if (missed > 5) {
+	        state = DEEP_SLEEP;
+		missed = 0;
+	    }
+	}
+	delay(2000);
+    } else if (state == DEEP_SLEEP) {
+	Serial.println("Deep Sleep");
+	if (ok) {
+            state = CONNECTED;
+	} else {
+	    Serial.println("failed to connect");
+	}
+	delay(5000);
+   }
 }
+
+  //
+  // Pong back role.  Receive each packet, dump it out, and send it back
+  //
 // vim:cin:ai:sts=2 sw=2 ft=cpp

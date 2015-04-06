@@ -5,7 +5,7 @@
 #include "constants/constants.h"
 #include "main.h"
 
-#include "TextLCD.h"
+//#include "TextLCD.h"
 #include <string>
 #include <sstream>
 
@@ -37,20 +37,22 @@ DigitalOut led3(LED3);
 DigitalOut led4(LED4);
 Serial pc(USBTX, USBRX); // tx, rx
 xbee xbee(p13, p14, p12);
-TextLCD lcd(p21, p22, p23, p24, p25, p26); // rs, e, d4-d7
+//TextLCD lcd(p21, p22, p23, p24, p25, p26); // rs, e, d4-d7
 I2C arduino(p9, p10);
 InterruptIn critical(p8);
 
-InterruptIn shift_up(5);
-InterruptIn shift_down(6);
-InterruptIn landing_up(7);
-InterruptIn landing_down(8);
-InterruptIn turn_left(11);
-InterruptIn turn_right(14);
+InterruptIn shift_up(p5);
+uint8_t shift_up_used = 0;
+InterruptIn shift_down(p14);
+uint8_t shift_down_used = 0;
+InterruptIn landing_up(p7);
+InterruptIn landing_down(p8);
+InterruptIn turn_left(p11);
+InterruptIn turn_right(p6);
 
 Ticker tick_arduino, tick_lcd, tick_lander;
 Timeout timeout;
-
+Timeout timeout2;
 /* I2C values */
 uint8_t read_addr = 0x7 << 1 | 0x1;
 uint8_t write_addr = 0x7 << 1;
@@ -69,7 +71,6 @@ uint8_t gear = 1;
 uint8_t front_light = 0;
 uint8_t right_turn = 0;
 uint8_t left_turn = 0;
-uint8_t right_turn = 0;
 uint8_t landing_gear = 0;
 
 /* Initialize everything necessary for the scripts. */
@@ -78,7 +79,7 @@ void init() {
 	critical.rise(&get_updates);
     
 	tick_arduino.attach(&get_updates, 1);
-    tick_lcd.attach(&update_lcd, 1);
+//    tick_lcd.attach(&update_lcd, 1);
     
     shift_up.rise(&shift_up_fn);
     shift_down.rise(&shift_down_fn);
@@ -102,18 +103,35 @@ left turn = 't'
 front light = 'f' //unused
 */
 
+void allow_shift_up() {
+	shift_up_used = 0;
+}
+void allow_shift_down() {
+	shift_down_used = 0;
+}
+
 void shift_up_fn() {
-    if (gear < 11) {
+		if (!shift_up_used) {
+			shift_up_used = 1;
+			pc.printf("Gearup: %d\n\r", gear);
+			if (gear < 11) {
         gear++;
         send_sensor('g', gear);
-    }
+			}
+			timeout.attach_us(&allow_shift_up, 100000);
+		}
 }
 
 void shift_down_fn() {
-    if (gear > 1) {
+		if (!shift_down_used) {
+			shift_down_used = 1;
+			pc.printf("Geardown: %d\n\r", gear);
+			if (gear > 1) {
         gear--;
         send_sensor('g', gear);
-    }
+			}
+			timeout2.attach_us(&allow_shift_down, 100000);
+	}
 }
 
 //Landing gear: 0 = up, 1 = down.
@@ -203,7 +221,7 @@ void send_sensor(uint8_t id, char data) {
 	arduino.write(write_addr, out, 2);
 }
 
-void update_lcd() {
+/*void update_lcd() {
 	//update lcd display after receiving and sending data to handler
 		//write to LCD screen
         //if (t.read() > last_time + min_time_update){
@@ -223,7 +241,7 @@ void update_lcd() {
             //line 2
             format_data << "       ";
             format_data.width(2);
-            format_data << gear_val;
+            format_data << gear;
             format_data << "      ";
             format_data.width(3);
             format_data << cadence;
@@ -244,7 +262,7 @@ void update_lcd() {
             format_data << seconds;
             format_data << "     ";
             lcd.printf(format_data.str().c_str());
-}
+}*/
 
 /* Main. */
 int main() {
