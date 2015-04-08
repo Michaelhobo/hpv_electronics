@@ -76,7 +76,7 @@ uint8_t landing_gear = 0;
 /* Initialize everything necessary for the scripts. */
 void init() {
 	pc.printf("Human Powered Vehicle Controller");
-	critical.rise(&get_updates);
+//	critical.rise(&get_updates);
     
 	tick_arduino.attach(&get_updates, 1);
 //    tick_lcd.attach(&update_lcd, 1);
@@ -95,24 +95,24 @@ front light = 'f' //unused
 */
 
 //Debouncer variables for shifting
-uint8_t shift_up_hold = 1;
-uint8_t shift_down_hold = 1;
+uint8_t shift_up_hold = 0;
+uint8_t shift_down_hold = 0;
 void shift_gear_fn() {
     if (shift_up.read()) {
-        if (shift_up_hold && (gear < 11)) {
+        if (!shift_up_hold && (gear < 11)) {
             gear++;
         }
-        shift_up_hold = 0;
-    } else {
         shift_up_hold = 1;
+    } else {
+        shift_up_hold = 0;
     }
     if (shift_down.read()) {
-        if (shift_down_hold && (gear > 1)) {
+        if (!shift_down_hold && (gear > 1)) {
             gear--;
         }
-        shift_down_hold = 0;
-    } else {
         shift_down_hold = 1;
+    } else {
+        shift_down_hold = 0;
     }
     send_sensor('g', gear);
 }
@@ -128,10 +128,10 @@ void landing_fn() {
         landing_gear = 1;
         send_sensor('l', 1);
     } else {    //Automatic controller
-        if (landing_gear && (speed > 10)) { //Landing gear down
+        if (landing_gear && (speed > 10)) { //Landing gear down but fast
             landing_gear = 0;
             send_sensor('l', 0);
-        } else if (!landing_gear && speed < 5) {    //Landing gear up
+        } else if (!landing_gear && speed < 5) { //Landing gear up but slow
             landing_gear = 1;
             send_sensor('l', 1);
         }
