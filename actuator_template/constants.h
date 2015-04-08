@@ -4,3 +4,4 @@
 #define CONNECTED 1
 #define SLEEP 2
 #define DEEP_SLEEP 3
+#define PING_DELAY 10000
