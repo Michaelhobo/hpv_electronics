@@ -18,3 +18,7 @@ void off_left_fn();
 void off_right_fn();
 
 void update_lcd();
+
+void shift_gear_fn();
+void landing_fn();
+void turn_signal_fn();

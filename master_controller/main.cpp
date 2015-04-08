@@ -39,20 +39,19 @@ Serial pc(USBTX, USBRX); // tx, rx
 xbee xbee(p13, p14, p12);
 //TextLCD lcd(p21, p22, p23, p24, p25, p26); // rs, e, d4-d7
 I2C arduino(p9, p10);
-InterruptIn critical(p8);
+//InterruptIn critical(p8);
 
-InterruptIn shift_up(p5);
-uint8_t shift_up_used = 0;
-InterruptIn shift_down(p14);
-uint8_t shift_down_used = 0;
-InterruptIn landing_up(p7);
-InterruptIn landing_down(p8);
-InterruptIn turn_left(p11);
-InterruptIn turn_right(p6);
+DigitalIn shift_up(p5);
+DigitalIn shift_down(p6);
+DigitalIn landing_up(p7);
+DigitalIn landing_down(p8);
+DigitalIn turn_left(p11);
+DigitalIn turn_right(p14);
 
-Ticker tick_arduino, tick_lcd, tick_lander;
-Timeout timeout;
-Timeout timeout2;
+Ticker tick_arduino, tick_lcd;
+Ticker t_gear, t_landing, t_turn_signal;
+//Timeout timeout;
+
 /* I2C values */
 uint8_t read_addr = 0x7 << 1 | 0x1;
 uint8_t write_addr = 0x7 << 1;
@@ -76,23 +75,14 @@ uint8_t landing_gear = 0;
 /* Initialize everything necessary for the scripts. */
 void init() {
 	pc.printf("Human Powered Vehicle Controller");
-	critical.rise(&get_updates);
+//	critical.rise(&get_updates);
     
 	tick_arduino.attach(&get_updates, 1);
 //    tick_lcd.attach(&update_lcd, 1);
     
-    shift_up.rise(&shift_up_fn);
-    shift_down.rise(&shift_down_fn);
-    
-    landing_up.rise(&landing_up_fn);
-    landing_down.rise(&landing_down_fn);
-    landing_up.fall(&landing_auto_fn);
-    landing_down.fall(&landing_auto_fn);
-    
-    turn_left.rise(&turn_left_fn);
-    turn_right.rise(&turn_right_fn);
-    turn_left.fall(&off_left_fn);
-    turn_right.fall(&off_right_fn);
+    t_gear.attach(&shift_gear_fn, 0.1);
+    t_landing.attach(&landing_fn, 0.5);
+    t_turn_signal.attach(&turn_signal_fn, 0.5);
 }
 
 /*ID s
@@ -103,89 +93,66 @@ left turn = 't'
 front light = 'f' //unused
 */
 
-void allow_shift_up() {
-	shift_up_used = 0;
-}
-void allow_shift_down() {
-	shift_down_used = 0;
+//Debouncer variables for shifting
+uint8_t shift_up_hold = 0;
+uint8_t shift_down_hold = 0;
+void shift_gear_fn() {
+    if (shift_up.read()) {
+        if (!shift_up_hold && (gear < 11)) {
+            gear++;
+        }
+        shift_up_hold = 1;
+    } else {
+        shift_up_hold = 0;
+    }
+    if (shift_down.read()) {
+        if (!shift_down_hold && (gear > 1)) {
+            gear--;
+        }
+        shift_down_hold = 1;
+    } else {
+        shift_down_hold = 0;
+    }
+    send_sensor('g', gear);
 }
 
-void shift_up_fn() {
-		if (!shift_up_used) {
-			shift_up_used = 1;
-			pc.printf("Gearup: %d\n\r", gear);
-			if (gear < 11) {
-        gear++;
-        send_sensor('g', gear);
-			}
-			timeout.attach_us(&allow_shift_up, 100000);
-		}
-}
 
-void shift_down_fn() {
-		if (!shift_down_used) {
-			shift_down_used = 1;
-			pc.printf("Geardown: %d\n\r", gear);
-			if (gear > 1) {
-        gear--;
-        send_sensor('g', gear);
-			}
-			timeout2.attach_us(&allow_shift_down, 100000);
-	}
-}
 
 //Landing gear: 0 = up, 1 = down.
-void landing_up_fn() {
-    tick_lander.detach();
-    landing_gear = 0;
-    send_sensor('l', 0);
-}
-    
-void landing_down_fn() {
-    tick_lander.detach();
-    landing_gear = 1;
-    send_sensor('l', 1);
-}
-
-void landing_auto_fn() {
-    tick_lander.attach(&landing_auto, 1);
-}
-
-void landing_auto() {
-    if (landing_gear) { //Landing gear down
-        if (speed > 10) {
+void landing_fn() {
+    if (landing_up.read()) {
+        landing_gear = 0;
+        send_sensor('l', 0);
+    } else if (landing_down.read()) {
+        landing_gear = 1;
+        send_sensor('l', 1);
+    } else {    //Automatic controller
+        if (landing_gear && (speed > 10)) { //Landing gear down but fast
             landing_gear = 0;
             send_sensor('l', 0);
-        }
-        
-    } else {    //Landing gear up
-        if (speed < 5) {
+        } else if (!landing_gear && speed < 5) { //Landing gear up but slow
             landing_gear = 1;
             send_sensor('l', 1);
         }
     }
 }
 
-void turn_left_fn() {
-    left_turn = 1;
-    send_sensor('t', 1);
-}
+void turn_signal_fn() {
+    if (turn_left.read()) {
+        left_turn = 1;
+    } else {
+        left_turn = 0;
+    }
+    
+    if (turn_right.read()) {
+        right_turn = 1;
+    } else {
+        right_turn = 0;
+    }
 
-void turn_right_fn() {
-    right_turn = 1;
-    send_sensor('r', 1);
+    send_sensor('t', left_turn);
+    send_sensor('r', right_turn);
 }
-
-void off_left_fn() {
-    left_turn = 0;
-    send_sensor('t', 0);
-}
-
-void off_right_fn() {
-    right_turn = 0;
-    send_sensor('r', 0);
-}
-
 
 /* Get updates from arduino. 
  * A 255 means the value has not been updated from last time.
@@ -220,8 +187,8 @@ void send_sensor(uint8_t id, char data) {
 	out[1] = data;
 	arduino.write(write_addr, out, 2);
 }
-
-/*void update_lcd() {
+/*
+void update_lcd() {
 	//update lcd display after receiving and sending data to handler
 		//write to LCD screen
         //if (t.read() > last_time + min_time_update){
@@ -241,7 +208,7 @@ void send_sensor(uint8_t id, char data) {
             //line 2
             format_data << "       ";
             format_data.width(2);
-            format_data << gear;
+            format_data << gear_val;
             format_data << "      ";
             format_data.width(3);
             format_data << cadence;
@@ -262,8 +229,8 @@ void send_sensor(uint8_t id, char data) {
             format_data << seconds;
             format_data << "     ";
             lcd.printf(format_data.str().c_str());
-}*/
-
+}
+*/
 /* Main. */
 int main() {
 	init();

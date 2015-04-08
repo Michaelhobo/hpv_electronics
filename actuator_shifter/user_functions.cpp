@@ -5,23 +5,18 @@
  * so the template can change without fear of merge conflicts.
  */
 
+#define MYADDR 'g'
+ 
+const int servo_pin = 9;
+uint8_t gear_positions[11] = {180, 162, 144, 126, 108, 90, 72, 54, 36, 18, 0};
+Servo servo1;
+
 /* Allows user to set things up. */
-void user_setup() {}
+void user_setup() {
+	servo1.attach(9);
+}
 
 /* Allows user to clean things up before a long shutdown. */
 void user_shutdown() {}
 
-void manipulate_data(char* data){
-    //if (data[0] == 'b'){
-      if (data[1] == 's'){
-        shutdown_all();
-      }
-      else{
-        /* Code here please */
-        uint8_t gear = data[1];
-        Serial.print("Switching to gear ");
-        Serial.println(gear);
-  servo1.write(gear_positions[gear - 1]);
-      }
-    //}
-}
+void manipulate_data(char* data) {}
