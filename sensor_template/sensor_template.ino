@@ -21,11 +21,6 @@ char sensor_data[NUM_SENSORS];
 
 void setup(void)
 {
-
-	//
-	// Print preamble
-	//
-
 	Serial.begin(57600);
 	radio.begin();
 	radio.setRetries(15,15);

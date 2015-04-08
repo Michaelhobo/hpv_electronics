@@ -98,22 +98,28 @@ uint8_t shift_up_hold = 0;
 uint8_t shift_down_hold = 0;
 void shift_gear_fn() {
     if (shift_up.read()) {
+				pc.printf("shift up...");
         if (!shift_up_hold && (gear < 11)) {
             gear++;
+						pc.printf("no hold, shift to gear %d\n\r", gear);
+						send_sensor('g', gear);
         }
         shift_up_hold = 1;
     } else {
         shift_up_hold = 0;
     }
     if (shift_down.read()) {
+				pc.printf("shift down...");
         if (!shift_down_hold && (gear > 1)) {
             gear--;
+						pc.printf("no hold, shift to gear %d\n\r", gear);
+						send_sensor('g', gear);
         }
         shift_down_hold = 1;
     } else {
         shift_down_hold = 0;
     }
-    send_sensor('g', gear);
+    //send_sensor('g', gear);
 }
 
 
@@ -122,17 +128,17 @@ void shift_gear_fn() {
 void landing_fn() {
     if (landing_up.read()) {
         landing_gear = 0;
-        send_sensor('l', 0);
+        //send_sensor('l', 0);
     } else if (landing_down.read()) {
         landing_gear = 1;
-        send_sensor('l', 1);
+        //send_sensor('l', 1);
     } else {    //Automatic controller
         if (landing_gear && (speed > 10)) { //Landing gear down but fast
             landing_gear = 0;
-            send_sensor('l', 0);
+            //send_sensor('l', 0);
         } else if (!landing_gear && speed < 5) { //Landing gear up but slow
             landing_gear = 1;
-            send_sensor('l', 1);
+            //send_sensor('l', 1);
         }
     }
 }
@@ -150,8 +156,8 @@ void turn_signal_fn() {
         right_turn = 0;
     }
 
-    send_sensor('t', left_turn);
-    send_sensor('r', right_turn);
+    //send_sensor('t', left_turn);
+    //send_sensor('r', right_turn);
 }
 
 /* Get updates from arduino. 
