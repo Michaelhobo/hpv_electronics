@@ -3,10 +3,7 @@
 #include "nRF24L01.h"
 #include "RF24.h"
 #include "constants.h"
-#include "user_functions.cpp"
-
-#define MYADDR 0
-#define NUM_SENSORS 4
+#include "addr.h"
 
 char write_buffer[RF24_TRANSFER_SIZE];
 char read_buffer[RF24_TRANSFER_SIZE];
@@ -17,15 +14,8 @@ uint8_t state;
 const uint64_t masterAddress = 0x00F0F0F0F0LL;
 const uint64_t myAddress = 0xF0F0F0F000LL | MYADDR;
 
-char sensor_data[NUM_SENSORS];
-
 void setup(void)
 {
-
-	//
-	// Print preamble
-	//
-
 	Serial.begin(57600);
 	radio.begin();
 	radio.setRetries(15,15);
@@ -99,28 +89,3 @@ void loop(void)
 	}
 }
 
-/* User Functions - Sensor Template
- * ONLY EDIT BELOW SECTIONS TO PREVENT MERGE CONFLICTS
- * These functions should perform appropriate actions at every cycle of the loop.
- * Collected and formatted data should be stored in write_buffer[1]
- * This file is meant to pull user-defined functions out of the base template,
- * so the template can change without fear of merge conflicts.
- */
-
-/* Allows user to set things up. */
-void user_setup() {}
-
-/* This function is called before we send. */
-void data_manipulation() {}
-
-/* These functions are called after we send data,
- * and we're figuring out what state 
- * we're going to switch to.
- */
-void connected_action() {}
-
-void sleep_action() {}
-
-void deep_sleep_action() {}
-
-// vim:cin:ai:sts=2 sw=2 ft=cpp
