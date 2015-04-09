@@ -1,1 +1,1 @@
-#define MYADDR '255'
+#define MYADDR 0
