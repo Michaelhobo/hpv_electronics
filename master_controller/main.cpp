@@ -164,7 +164,6 @@ void turn_signal_fn() {
  * A 255 means the value has not been updated from last time.
  */
 void get_updates() {
-	pc.printf("get_updates() ...");
 	arduino.read(read_addr, arduino_updates, NUM_SENSORS);
 	for (int i = 0; i < NUM_SENSORS; i++) {
 		if (arduino_updates[i] != 255) {
@@ -184,7 +183,6 @@ void get_updates() {
 			}
 		}
 	}
-	pc.printf("done\n\r");
 }
 
 /* Send to a sensor with an id. */
