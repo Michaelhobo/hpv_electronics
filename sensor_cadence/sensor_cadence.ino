@@ -3,10 +3,7 @@
 #include "nRF24L01.h"
 #include "RF24.h"
 #include "constants.h"
-#include "user_functions.cpp"
-
-#define MYADDR 0
-#define NUM_SENSORS 4
+#include "addr.h"
 
 char write_buffer[RF24_TRANSFER_SIZE];
 char read_buffer[RF24_TRANSFER_SIZE];
@@ -17,15 +14,8 @@ uint8_t state;
 const uint64_t masterAddress = 0x00F0F0F0F0LL;
 const uint64_t myAddress = 0xF0F0F0F000LL | MYADDR;
 
-char sensor_data[NUM_SENSORS];
-
 void setup(void)
 {
-
-	//
-	// Print preamble
-	//
-
 	Serial.begin(57600);
 	radio.begin();
 	radio.setRetries(15,15);
@@ -98,4 +88,4 @@ void loop(void)
 		delay(DEEP_SLEEP_DELAY);
 	}
 }
-// vim:cin:ai:sts=2 sw=2 ft=cpp
+

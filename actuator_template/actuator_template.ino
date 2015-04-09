@@ -1,21 +1,19 @@
-#include <Servo.h>
 #include <Wire.h>
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
 #include "constants.h"
+#include "addr.h"
 
 char write_buffer[RF24_TRANSFER_SIZE];
 char read_buffer[RF24_TRANSFER_SIZE];
 RF24 radio(8, 7);
 uint8_t missed = 0;
 uint8_t state;
+int last_time = 0;
 
 const uint64_t masterAddress = 0x00F0F0F0F0LL;
 const uint64_t myAddress = 0xF0F0F0F000LL | MYADDR;
-#define NUM_SENSORS 4
-
-char sensor_data[NUM_SENSORS];
 
 void setup(void)
 {
@@ -65,4 +63,3 @@ void loop(void)
 		last_time = millis();
 	}
 }
-// vim:cin:ai:sts=2 sw=2 ft=cpp
