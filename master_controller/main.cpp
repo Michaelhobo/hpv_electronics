@@ -2,6 +2,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include "xbee.h"
+#include "TextLCD.h"
 #include "constants/constants.h"
 #include "main.h"
 
@@ -47,6 +48,8 @@ DigitalIn landing_up(p7);
 DigitalIn landing_down(p8);
 DigitalIn turn_left(p11);
 DigitalIn turn_right(p14);
+
+TextLCD lcd(p21,p22,p23,p24,p25,p26);
 
 Ticker tick_arduino, tick_lcd, tick_time_lcd;
 Ticker t_gear, t_landing, t_turn_signal;
@@ -216,9 +219,9 @@ void lcd_display_init() {
     lcd.character(8,0,65);
     lcd.character(9,0,82);
 
-    lcd.character(0,0,076);
-    lcd.character(1,0,071);
-    lcd.character(2,0,058);
+    lcd.character(0,0,76);//0
+    lcd.character(1,0,71);//0
+    lcd.character(2,0,58);//0
 
     lcd.character(13,0,67);
     lcd.character(14,0,65);
