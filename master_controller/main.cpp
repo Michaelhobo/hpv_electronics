@@ -89,6 +89,7 @@ void init() {
     
 	tick_arduino.attach(&get_updates, 1);
 //    tick_lcd.attach(&update_lcd, 1);
+    lcd_display_init();
     tick_time_lcd.attach(&lcd_update_time, 1);
     
     t_gear.attach(&shift_gear_fn, 0.1);
