@@ -72,6 +72,12 @@ uint8_t right_turn = 0;
 uint8_t left_turn = 0;
 uint8_t landing_gear = 0;
 
+
+/* Sends data to remote computer. */
+void xbee_update() {
+	xbee.SendData(arduino_updates);
+}
+
 /* Initialize everything necessary for the scripts. */
 void init() {
 	pc.printf("Human Powered Vehicle Controller");
@@ -165,6 +171,7 @@ void turn_signal_fn() {
  */
 void get_updates() {
 	arduino.read(read_addr, arduino_updates, NUM_SENSORS);
+	pc.printf("i2cup ");
 	for (int i = 0; i < NUM_SENSORS; i++) {
 		if (arduino_updates[i] != 255) {
 			switch (i) {
@@ -183,6 +190,7 @@ void get_updates() {
 			}
 		}
 	}
+	xbee_update();
 }
 
 /* Send to a sensor with an id. */
@@ -191,50 +199,6 @@ void send_sensor(uint8_t id, char data) {
 	out[1] = data;
 	arduino.write(write_addr, out, 2);
 }
-/*
-void update_lcd() {
-	//update lcd display after receiving and sending data to handler
-		//write to LCD screen
-        //if (t.read() > last_time + min_time_update){
-            //format of the screen is
-            //cadence          dist
-            //______________________
-            //|      GEAR   CADENCE|
-            //|       XX      XXX  |
-            //|SPEED     TIME      |
-            //| XX      XXX:XX     |
-            //|---------------------
-            //gear              time
-            lcd.cls();
-						int last_time = 60;//FOR NOW
-            std::ostringstream format_data;
-            format_data << "      GEAR   CADENCE";
-            //line 2
-            format_data << "       ";
-            format_data.width(2);
-            format_data << gear_val;
-            format_data << "      ";
-            format_data.width(3);
-            format_data << cadence;
-            format_data << "  ";
-            //third line
-            format_data << "SPEED     TIME      ";
-            //fourth line
-            format_data << " ";
-            format_data.width(2);
-            format_data << speed;
-            format_data << "      ";
-            int minutes = (int)last_time/60;
-            format_data.width(3);
-            format_data << minutes;
-            format_data << ":";
-            int seconds = ((int)last_time) % 60;
-            format_data.width(2);
-            format_data << seconds;
-            format_data << "     ";
-            lcd.printf(format_data.str().c_str());
-}
-*/
 /* Main. */
 int main() {
 	init();
