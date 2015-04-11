@@ -6,18 +6,8 @@
  */
 #include <dht11.h>
 dht11 DHT11;
-#define DHT11PIN 2
+#define DHT11PIN 3
 int i = 0;
-double Fahrenheit(double celsius)
-{
-	return 1.8 * celsius + 32;
-}
-
-//Celsius to Kelvin conversion
-double Kelvin(double celsius)
-{
-	return celsius + 273.15;
-} 
 /* Allows user to set things up. */
 void user_setup() {
   //Celsius to Fahrenheit conversion
@@ -61,12 +51,6 @@ void data_manipulation() {
   } else {
     Serial.print("Temperature (°C): ");
     Serial.println((float)DHT11.temperature, 2);
-    
-    Serial.print("Temperature (°F): ");
-    Serial.println(Fahrenheit(DHT11.temperature), 2);
-
-    Serial.print("Temperature (°K): ");
-    Serial.println(Kelvin(DHT11.temperature), 2);
     write_buffer[1] = (uint8_t) DHT11.temperature;
     i = 1;
   }
