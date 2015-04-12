@@ -13,8 +13,9 @@ uint8_t missed = 0;
 uint8_t state;
 int last_time = 0;
 
-const uint64_t masterAddress = 0x00F0F0F0F0LL;
-const uint64_t myAddress = 0xF0F0F0F000LL | MYADDR;
+bool klondike = true;//Set to false if uploading to burnt toast
+const uint64_t masterAddress = klondike? 0x00F0F0F0F0LL : 0x00E0E0E0E0LL;
+const uint64_t myAddress = klondike? (0xF0F0F0F000LL | MYADDR) : (0xE0E0E0E000LL | MYADDR);
 
 void setup(void)
 {

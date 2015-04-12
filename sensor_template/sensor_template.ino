@@ -11,8 +11,10 @@ RF24 radio(8, 7);
 uint8_t missed = 0;
 uint8_t state;
 
-const uint64_t masterAddress = 0x00F0F0F0F0LL;
-const uint64_t myAddress = 0xF0F0F0F000LL | MYADDR;
+bool klondike = true; //Set to false whenever uploading to Burnt Toast
+const uint64_t masterAddress = klondike? 0x00F0F0F0F0LL: 0x00E0E0E0E0LL; //Yaaaa ternary operator
+const uint64_t myAddress = klondike ?(0xF0F0F0F000LL | MYADDR): (0xE0E0E0E000LL | MYADDR); //Yaaa more Ternary Operator!
+
 
 void setup(void)
 {

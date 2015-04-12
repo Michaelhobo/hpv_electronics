@@ -17,8 +17,10 @@ RF24 radio(8, 7);
 #define NUM_SENSORS 4
 
 const uint8_t SHUTDOWN_CHAR = 'x';
-const uint64_t rf24_addr = 0x00F0F0F0F0LL;
-const uint64_t base_addr = 0xF0F0F0F000LL;
+
+bool klondike = true;//Set to false if uploading to burnt toast
+const uint64_t rf24_addr = klondike? 0x00F0F0F0F0LL : 0x00E0E0E0E0LL;
+const uint64_t base_addr = klondike? 0xF0F0F0F000LL : 0xE0E0E0E000LL;
 char sensor_data[NUM_SENSORS];
 char rf24_in[RF24_TRANSFER_SIZE];
 char rf24_out[RF24_TRANSFER_SIZE];
@@ -37,7 +39,7 @@ void setup(void)
   radio.begin();
   radio.setRetries(15,15); //(retry interval, retry number)
   radio.setPayloadSize(RF24_TRANSFER_SIZE);
-  radio.openWritingPipe((const uint64_t) 0xF0F0F0F000LL);
+  radio.openWritingPipe((const uint64_t) base_addr);
   radio.openReadingPipe(1,rf24_addr);
   radio.startListening();
 }
