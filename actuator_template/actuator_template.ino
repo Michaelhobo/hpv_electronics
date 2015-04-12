@@ -4,6 +4,7 @@
 #include "RF24.h"
 #include "constants.h"
 #include "addr.h"
+#include <avr/sleep.h>
 
 char write_buffer[RF24_TRANSFER_SIZE];
 char read_buffer[RF24_TRANSFER_SIZE];
@@ -29,8 +30,19 @@ void setup(void)
 }
 
 void shutdown_all(){
-	/* For future work niggas */
-	user_shutdown();
+    user_shutdown(); //Prioritize whatever the user wants to shut down first, before the execution of the shutdown of arduino.
+    radio.stopListening();
+    radio.powerDown();
+    set_sleep_mode(SLEEP_MODE_PWR_SAVE);   // sleep mode is set here
+    sleep_enable();          // enables the sleep bit in the mcucr register    
+    sleep_mode();            // here the device is actually put to sleep!! 
+                              // THE PROGRAM CONTINUES FROM HERE AFTER WAKING UP
+    sleep_disable();         // first thing after waking from sleep:
+                             // disable sleep...
+    radio.powerUp();
+    radio.openReadingPipe(1, myAddress);
+    radio.openWritingPipe(masterAddress);
+    radio.startListening();
 }
 
 bool ping_master() {

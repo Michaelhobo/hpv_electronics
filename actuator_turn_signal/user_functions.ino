@@ -1,3 +1,5 @@
+#include <avr/sleep.h>
+
 /* User Functions - Actuator Template
  * ONLY EDIT FUNCTIONS BELOW THIS LINE TO PREVENT MERGE CONFLICTS
  * These functions should perform appropriate actions at every cycle of the loop.
@@ -34,6 +36,23 @@ void proceedBlink(){
   //delay(150);
 
 }
+
+void shutdown_sensor(){
+    radio.stopListening();
+    radio.powerDown();
+    set_sleep_mode(SLEEP_MODE_PWR_SAVE);   // sleep mode is set here
+    sleep_enable();          // enables the sleep bit in the mcucr register    
+    sleep_mode();            // here the device is actually put to sleep!! 
+                              // THE PROGRAM CONTINUES FROM HERE AFTER WAKING UP
+    sleep_disable();         // first thing after waking from sleep:
+                             // disable sleep...
+     radio.powerUp();
+    radio.openReadingPipe(1, myAddress);
+    radio.openWritingPipe(masterAddress);
+    radio.startListening();
+}
+
+
 
 void turnOn(){
   light_on = 1;
