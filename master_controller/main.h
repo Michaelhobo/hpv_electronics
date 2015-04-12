@@ -24,3 +24,4 @@ void landing_fn();
 void turn_signal_fn();
 
 void lcd_update_time();
+void lcd_display_init();
