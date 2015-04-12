@@ -31,7 +31,6 @@ void setup(void)
 
 void shutdown_all(){
     user_shutdown(); //Prioritize whatever the user wants to shut down first, before the execution of the shutdown of arduino.
-    radio.stopListening();
     radio.powerDown();
     set_sleep_mode(SLEEP_MODE_PWR_SAVE);   // sleep mode is set here
     sleep_enable();          // enables the sleep bit in the mcucr register    
@@ -61,7 +60,12 @@ bool read_data() {
 	while (radio.available()){
 		radio.read(read_buffer, RF24_TRANSFER_SIZE);
 		Serial.println("Successfully read data");
-		manipulate_data(read_buffer);
+                if(read_buffer[1] == 'x'){
+                    shutdown_all();
+                }
+                else {
+		    manipulate_data(read_buffer);
+                }
 	}
 	return hasRead;
 }

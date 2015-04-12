@@ -16,6 +16,7 @@ RF24 radio(8, 7);
 
 #define NUM_SENSORS 4
 
+const uint8_t SHUTDOWN_CHAR = 'x';
 const uint64_t rf24_addr = 0x00F0F0F0F0LL;
 const uint64_t base_addr = 0xF0F0F0F000LL;
 char sensor_data[NUM_SENSORS];
@@ -46,6 +47,15 @@ void on_receive(int dataSize) {
 	uint8_t id = (uint8_t) Wire.read();
 	char data = Wire.read();
 	send_slave(id, data);
+}
+
+
+void initiateShutdown(){
+       send_slave('g', SHUTDOWN_CHAR);
+       send_slave('f', SHUTDOWN_CHAR);
+       send_slave('r', SHUTDOWN_CHAR);
+       send_slave('t', SHUTDOWN_CHAR);
+       send_slave('l', SHUTDOWN_CHAR);
 }
 
 void send_slave(uint8_t id, char data) {
@@ -97,7 +107,13 @@ void loop(void)
         Serial.println("from brightness sensor");
         sensor_data[3] = rf24_in[1];
         break;
-
+      case 4: //occupancy
+        sensor_data[4] = rf24_in[1];
+        if(rf24_in[1] == 0){
+          initiateShutdown();
+        }
+        break;
+      
       case 'g': //gear shift
         break;
       case 'f': //front light

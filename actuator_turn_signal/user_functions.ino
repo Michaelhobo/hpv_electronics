@@ -1,5 +1,3 @@
-#include <avr/sleep.h>
-
 /* User Functions - Actuator Template
  * ONLY EDIT FUNCTIONS BELOW THIS LINE TO PREVENT MERGE CONFLICTS
  * These functions should perform appropriate actions at every cycle of the loop.

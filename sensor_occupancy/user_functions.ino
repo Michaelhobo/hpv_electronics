@@ -5,18 +5,19 @@
  * so the template can change without fear of merge conflicts.
  */
 
-int forcepin = 7;
-
+int forcepin_seat = 7;
+int forcepin_back = 8;
 
 /* Allows user to set things up. */
 void user_setup() {
-  pinMode(forcepin, INPUT);
+  pinMode(forcepin_seat, INPUT);
+  pinMode(forcepin_back, INPUT);
 }
 
 /* This function is called before we send. */
 void data_manipulation() {
   delay(5000); //This doesnt have to be frequent at all, since this doesnt change often. I could probably make it 20000 and probably not affect the effectiveness that much.
-  if (digitalRead(forcepin)==HIGH){
+  if (digitalRead(forcepin_seat)==HIGH || digitalRead(forcepin_back) == HIGH){
     write_buffer[1] = 1;
   }
   else{
