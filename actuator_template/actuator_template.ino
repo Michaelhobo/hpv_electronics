@@ -4,6 +4,7 @@
 #include "RF24.h"
 #include "constants.h"
 #include "addr.h"
+#include <avr/sleep.h>
 
 char write_buffer[RF24_TRANSFER_SIZE];
 char read_buffer[RF24_TRANSFER_SIZE];
@@ -12,8 +13,9 @@ uint8_t missed = 0;
 uint8_t state;
 int last_time = 0;
 
-const uint64_t masterAddress = 0x00F0F0F0F0LL;
-const uint64_t myAddress = 0xF0F0F0F000LL | MYADDR;
+bool klondike = true;//Set to false if uploading to burnt toast
+const uint64_t masterAddress = klondike? 0x00F0F0F0F0LL : 0x00E0E0E0E0LL;
+const uint64_t myAddress = klondike? (0xF0F0F0F000LL | MYADDR) : (0xE0E0E0E000LL | MYADDR);
 
 void setup(void)
 {
@@ -29,8 +31,18 @@ void setup(void)
 }
 
 void shutdown_all(){
-	/* For future work niggas */
-	user_shutdown();
+    user_shutdown(); //Prioritize whatever the user wants to shut down first, before the execution of the shutdown of arduino.
+    radio.powerDown();
+    set_sleep_mode(SLEEP_MODE_PWR_SAVE);   // sleep mode is set here
+    sleep_enable();          // enables the sleep bit in the mcucr register    
+    sleep_mode();            // here the device is actually put to sleep!! 
+                              // THE PROGRAM CONTINUES FROM HERE AFTER WAKING UP
+    sleep_disable();         // first thing after waking from sleep:
+                             // disable sleep...
+    radio.powerUp();
+    radio.openReadingPipe(1, myAddress);
+    radio.openWritingPipe(masterAddress);
+    radio.startListening();
 }
 
 bool ping_master() {
@@ -49,7 +61,12 @@ bool read_data() {
 	while (radio.available()){
 		radio.read(read_buffer, RF24_TRANSFER_SIZE);
 		Serial.println("Successfully read data");
-		manipulate_data(read_buffer);
+                if(read_buffer[1] == 'x'){
+                    shutdown_all();
+                }
+                else {
+		    manipulate_data(read_buffer);
+                }
 	}
 	return hasRead;
 }
