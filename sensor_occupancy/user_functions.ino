@@ -5,8 +5,8 @@
  * so the template can change without fear of merge conflicts.
  */
 
-int forcepin_seat = 7;
-int forcepin_back = 8;
+int forcepin_seat = 4;
+int forcepin_back = 5;
 
 /* Allows user to set things up. */
 void user_setup() {
