@@ -1,1 +1,1 @@
-#define MYADDR 3
+#define MYADDR 2

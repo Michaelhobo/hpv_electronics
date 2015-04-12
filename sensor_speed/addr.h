@@ -1,4 +1,4 @@
-#define MYADDR 255
+#define MYADDR 0
 
 #define CONNECTED_DELAY 1000
 #define SLEEP_DELAY 2000

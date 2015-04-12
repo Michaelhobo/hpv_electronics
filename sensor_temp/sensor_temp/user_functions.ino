@@ -12,7 +12,6 @@ int i = 0;
 void user_setup() {
   //Celsius to Fahrenheit conversion
   
-  Serial.begin(115200);
   Serial.println("DHT11 TEST PROGRAM ");
   Serial.print("LIBRARY VERSION: ");
   Serial.println(DHT11LIB_VERSION);
@@ -45,12 +44,14 @@ void data_manipulation() {
   if (i == 1) {
     Serial.print("Humidity (%): ");
     Serial.println((float)DHT11.humidity, 2);
+    write_buffer[0] = 5;
     write_buffer[1] = (uint8_t) DHT11.humidity;
     i = 0;
     
   } else {
     Serial.print("Temperature (°C): ");
     Serial.println((float)DHT11.temperature, 2);
+    write_buffer[0] = 2;
     write_buffer[1] = (uint8_t) DHT11.temperature;
     i = 1;
   }

@@ -97,6 +97,10 @@ void loop(void)
         Serial.println("from brightness sensor");
         sensor_data[3] = rf24_in[1];
         break;
+      case 4: //occupancy
+        break;
+      case 5: //humidity
+        break;
 
       case 'g': //gear shift
         break;

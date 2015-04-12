@@ -20,7 +20,7 @@ void setup(void)
 	radio.begin();
 	radio.setRetries(15,15);
 	state = CONNECTED;
-
+	write_buffer[0] = MYADDR;
 
 	radio.setPayloadSize(RF24_TRANSFER_SIZE);
 	radio.openReadingPipe(1,myAddress);
