@@ -58,8 +58,8 @@ bool read_data() {
 void loop(void)
 {    
 	read_data();
-	if (millis() > last_time + PING_DELAY) {
+	/*if (millis() > last_time + PING_DELAY) {
 		ping_master();
 		last_time = millis();
-	}
+	}*/
 }
