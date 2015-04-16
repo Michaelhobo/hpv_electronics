@@ -11,6 +11,10 @@
 #include "nRF24L01.h"
 #include "RF24.h"
 #include "constants.h"
+#include <avr/power.h>
+#include <avr/sleep.h>
+#include <avr/wdt.h>
+
 
 RF24 radio(8, 7);
 
@@ -24,6 +28,9 @@ const uint64_t base_addr = klondike? 0xF0F0F0F000LL : 0xE0E0E0E000LL;
 char sensor_data[NUM_SENSORS];
 char rf24_in[RF24_TRANSFER_SIZE];
 char rf24_out[RF24_TRANSFER_SIZE];
+uint8_t check = 0;
+uint8_t shutdownOn = 0;
+
 
 void setup(void)
 {
@@ -42,6 +49,21 @@ void setup(void)
   radio.openWritingPipe((const uint64_t) base_addr);
   radio.openReadingPipe(1,rf24_addr);
   radio.startListening();
+  /*** Setup the WDT ***/
+  
+  /* Clear the reset flag. */
+  MCUSR &= ~(1<<WDRF);
+  
+  /* In order to change WDE or the prescaler, we need to
+   * set WDCE (This will allow updates for 4 clock cycles).
+   */
+  WDTCSR |= (1<<WDCE) | (1<<WDE);
+
+  /* set new watchdog timeout prescaler value */
+  WDTCSR = 1<<WDP3; /* 4.0 seconds */
+  
+  /* Enable the WD interrupt (note no reset). */
+  WDTCSR |= _BV(WDIE);
 }
 
 /* Receive data over I2C and deal with data accordingly. */
@@ -51,13 +73,30 @@ void on_receive(int dataSize) {
 	send_slave(id, data);
 }
 
+void shutdownThis(){
+       shutdownOn = 1;
+       radio.stopListening();
+       set_sleep_mode(SLEEP_MODE_PWR_DOWN);   // sleep mode is set here
+       sleep_enable();          // enables the sleep bit in the mcucr register    
+       sleep_mode();            // here the device is actually put to sleep!! 
+                                // THE PROGRAM CONTINUES FROM HERE AFTER WAKING UP
+       sleep_disable();         // first thing after waking from sleep:
+                                // disable sleep...
+       radio.powerUp();
+       radio.openReadingPipe(1, myAddress);
+       radio.openWritingPipe(masterAddress);
+       radio.startListening();
+       delay(400);
+}
 
 void initiateShutdown(){
+       count = 0;
        send_slave('g', SHUTDOWN_CHAR);
        send_slave('f', SHUTDOWN_CHAR);
        send_slave('r', SHUTDOWN_CHAR);
        send_slave('t', SHUTDOWN_CHAR);
        send_slave('l', SHUTDOWN_CHAR);
+       shutdownThis();
 }
 
 void send_slave(uint8_t id, char data) {
@@ -84,7 +123,11 @@ void send_update() {
 }
 
 void loop(void)
-{
+{  
+  if (shutdownOn == 1)
+  {
+      shutdownThis();
+  }
     // if there is data ready
   if ( radio.available() )
   {
@@ -112,7 +155,16 @@ void loop(void)
       case 4: //occupancy
         sensor_data[4] = rf24_in[1];
         if(rf24_in[1] == 0){
-          initiateShutdown();
+          if (count >= 3){
+            initiateShutdown();            
+          }
+          else {
+            count++;
+          }         
+        }
+        else if (shutdownOn == 1)
+        {
+            shutdownOn = 0;
         }
         break;
       case 5: //humidity

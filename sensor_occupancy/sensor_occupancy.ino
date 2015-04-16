@@ -11,7 +11,8 @@ RF24 radio(8, 7);
 uint8_t missed = 0;
 uint8_t state;
 
-const uint64_t masterAddress = 0x00F0F0F0F0LL;
+bool klondike = false;
+const uint64_t masterAddress = klondike? 0x00D0D0D0D0LL : 0x00C0C0C0C0LL
 const uint64_t myAddress = 0xF0F0F0F000LL | MYADDR;
 
 void setup(void)
