@@ -38,7 +38,6 @@ DigitalOut led3(LED3);
 DigitalOut led4(LED4);
 Serial pc(USBTX, USBRX); // tx, rx
 xbee xbee(p13, p14, p12);
-//TextLCD lcd(p21, p22, p23, p24, p25, p26); // rs, e, d4-d7
 I2C arduino(p9, p10);
 //InterruptIn critical(p8);
 
@@ -80,6 +79,7 @@ uint8_t landing_gear = 0;
 
 /* Sends data to remote computer. */
 void xbee_update() {
+	xbee.SendData("hi");
 	xbee.SendData(arduino_updates);
 }
 
