@@ -16,66 +16,82 @@ from plotly.graph_objs import *
 import numpy as np  # (*) numpy for math functions and arrays
 
 tls.set_credentials_file(username='michaelhobo', api_key='ohovaaa4gc', stream_ids=[
-	"hs44q2pj21",
-	"zrt3xa68wm",
-	"bn72dolxcj",
 	"49lgm9y6o4",
+	"bn72dolxcj",
+	"zrt3xa68wm",
+	"hs44q2pj21",
+	"9zn37ntt8r",
 ])
 
 stream_ids = tls.get_credentials_file()['stream_ids']
+def init_stream(ID, name):
+	# Get stream id from stream id list 
+	stream_id = stream_ids[ID]
+	# Make instance of stream id object 
+	stream = Stream(
+		token=stream_id,  # (!) link stream id to 'token' key
+		maxpoints=80      # (!) keep a max of 80 pts on screen
+	)
 
-# Get stream id from stream id list 
-stream_id = stream_ids[0]
+	# Initialize trace of streaming plot by embedding the unique stream_id
+	trace1 = Scatter(
+		x=[],
+		y=[],
+		mode='lines+markers',
+		stream=stream         # (!) embed stream id, 1 per trace
+	)
 
-# Make instance of stream id object 
-stream = Stream(
-	token=stream_id,  # (!) link stream id to 'token' key
-	maxpoints=80      # (!) keep a max of 80 pts on screen
-)
+	data = Data([trace1])
 
-# Initialize trace of streaming plot by embedding the unique stream_id
-trace1 = Scatter(
-	x=[],
-	y=[],
-	mode='lines+markers',
-	stream=stream         # (!) embed stream id, 1 per trace
-)
+	# Add title to layout object
+	layout = Layout(title='Time Series')
 
-data = Data([trace1])
+	# Make a figure object
+	fig = Figure(data=data, layout=layout)
 
-# Add title to layout object
-layout = Layout(title='Time Series')
+	# (@) Send fig to Plotly, initialize streaming plot, open new tab
+	unique_url = py.plot(fig, filename=name)
 
-# Make a figure object
-fig = Figure(data=data, layout=layout)
+	# (@) Make instance of the Stream link object, 
+	#     with same stream id as Stream id object
+	s = py.Stream(stream_id)
 
-# (@) Send fig to Plotly, initialize streaming plot, open new tab
-unique_url = py.plot(fig, filename='s7_first-stream')
+	# (@) Open the stream
+	s.open()
+	return s
 
-# (@) Make instance of the Stream link object, 
-#     with same stream id as Stream id object
-s = py.Stream(stream_id)
-
-# (@) Open the stream
-s.open()
+k_spd_stream = init_stream(0, "Klondike Speed")
+k_cad_stream = init_stream(1, "Klondike Cadence")
+k_tmp_stream = init_stream(2, "Klondike Inner Temperature")
+k_brt_stream = init_stream(3, "Klondike Outdoor Brightness")
+k_occ_stream = init_stream(4, "Klondike Occupancy")
 
 # (*) Import module keep track and format current time
 import datetime 
 import time   
 import sys
-
-i = 0    # a counter
-k = 5    # some shape parameter
-N = 200  # number of points to be plotted
+import struct
 
 for line in sys.stdin:
 	print("waiting for data")
+	if line[0] == 'k' and line[1] == 'u':
+		data = struct.unpack('bbbbb', line[2:7])
+		# Current time on x-axis, random numbers on y-axis
+		x = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+		spd = data[0] * 3 / 10
+		cad = data[1]
+		tmp = data[2]
+		brt = data[3]
+		if data[0] != 255:
+			k_spd_stream.write(dict(x=data[0] * 3 / 10, y=y))
+		if data[1] != 255:
+			k_cad_stream.write(dict(x=data[1], y=y))
+		if data[2] != 255:
+			k_tmp_stream.write(dict(x=data[2], y=y))
+		if data[3] != 255:
+			k_brt_stream.write(dict(x=data[3], y=y))
+		if data[4] != 255:
+			k_occ_stream.write(dict(x=data[4], y=y))
 	
-	# Current time on x-axis, random numbers on y-axis
-	x = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-	y = (np.cos(k*i/50.)*np.cos(i/50.)+np.random.randn(1))[0] 
-	# (@) write to Plotly stream!
-	s.write(dict(x=x, y=y))  
-	time.sleep(0.08)  # (!) plot a point every 80 ms, for smoother plotting
 # (@) Close the stream when done plotting
 s.close() 

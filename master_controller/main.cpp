@@ -58,7 +58,8 @@ Ticker t_gear, t_landing, t_turn_signal;
 uint8_t read_addr = 0x7 << 1 | 0x1;
 uint8_t write_addr = 0x7 << 1;
 char out[2];
-char arduino_updates[NUM_SENSORS];
+char xbee_data[NUM_SENSORS + 2];
+char arduino_updates = xbee_data + 1;
 
 /* Data Values. */
 double speed = 0.0; //calculated speed
@@ -77,17 +78,21 @@ uint8_t left_turn = 0;
 uint8_t landing_gear = 0;
 
 
-/* Sends data to remote computer. */
-void xbee_update() {
-	xbee.SendData("hi");
-	xbee.SendData(arduino_updates);
+/* Sends data to remote computer. 
+ * type: a parameter specifying what kind of update this is.
+ * u - regular data update
+ * anything else - the id of the actuator being updated
+ */
+void xbee_update(char type) {
+	xbee_data[1] = type;
+	xbee.SendData(xbee_data);
 }
 
 /* Initialize everything necessary for the scripts. */
 void init() {
 	pc.printf("Human Powered Vehicle Controller");
 	//	critical.rise(&get_updates);
-
+	xbee_data[0] = 'k';
 	tick_arduino.attach(&get_updates, 1);
 	//    tick_lcd.attach(&update_lcd, 1);
 	lcd_display_init();
