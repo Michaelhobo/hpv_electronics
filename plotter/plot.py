@@ -60,11 +60,15 @@ def init_stream(ID, name):
 	s.open()
 	return s
 
+print("initializing")
+
 k_spd_stream = init_stream(0, "Klondike Speed")
 k_cad_stream = init_stream(1, "Klondike Cadence")
 k_tmp_stream = init_stream(2, "Klondike Inner Temperature")
 k_brt_stream = init_stream(3, "Klondike Outdoor Brightness")
 k_occ_stream = init_stream(4, "Klondike Occupancy")
+
+print("done initializing")
 
 # (*) Import module keep track and format current time
 import datetime 
@@ -72,26 +76,33 @@ import time
 import sys
 import struct
 
-for line in sys.stdin:
-	print("waiting for data")
-	if line[0] == 'k' and line[1] == 'u':
-		data = struct.unpack('bbbbb', line[2:7])
-		# Current time on x-axis, random numbers on y-axis
-		x = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-		spd = data[0] * 3 / 10
-		cad = data[1]
-		tmp = data[2]
-		brt = data[3]
-		if data[0] != 255:
-			k_spd_stream.write(dict(x=data[0] * 3 / 10, y=y))
-		if data[1] != 255:
-			k_cad_stream.write(dict(x=data[1], y=y))
-		if data[2] != 255:
-			k_tmp_stream.write(dict(x=data[2], y=y))
-		if data[3] != 255:
-			k_brt_stream.write(dict(x=data[3], y=y))
-		if data[4] != 255:
-			k_occ_stream.write(dict(x=data[4], y=y))
-	
+f = open('log.txt', 'rb')
+f.read()
+k_numsensors = 5
+while True:
+	print("read")
+	c = f.read(1)
+	if c == b'k':
+		print("k")
+		c = f.read(1)
+		if c == b'u':
+			print("u")
+			x = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+			c = f.read(k_numsensors)
+			formatstr = 'b' * k_numsensors
+			print("data read")
+			data = struct.unpack(formatstr, c[0:k_numsensors])
+			if data[0] != 255:
+				k_spd_stream.write(dict(x=x, y=data[0] * 3 / 10))
+			if data[1] != 255:
+				k_cad_stream.write(dict(x=x, y=data[1]))
+			if data[2] != 255:
+				k_tmp_stream.write(dict(x=x, y=data[2]))
+			if data[3] != 255:
+				k_brt_stream.write(dict(x=x, y=data[3]))
+			if data[4] != 255:
+				k_occ_stream.write(dict(x=x, y=data[4]))
+	elif len(c) == 0:
+		time.sleep(0.25)
 # (@) Close the stream when done plotting
 s.close() 
