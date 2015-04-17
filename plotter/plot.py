@@ -50,7 +50,7 @@ def init_stream(ID, name):
 	fig = Figure(data=data, layout=layout)
 
 	# (@) Send fig to Plotly, initialize streaming plot, open new tab
-	unique_url = py.plot(fig, filename=name)
+	#unique_url = py.plot(fig, filename=name)
 
 	# (@) Make instance of the Stream link object, 
 	#     with same stream id as Stream id object
