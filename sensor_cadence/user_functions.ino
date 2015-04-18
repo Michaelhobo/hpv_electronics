@@ -10,6 +10,7 @@ void user_setup() {
   attachInterrupt(0, tick, RISING);
 }
 
+const int TIME_BETWEEN_RECORDINGS = 10;
 int count = 0;
 double last = 0;
 double secondLast = 0;
