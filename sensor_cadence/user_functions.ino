@@ -19,20 +19,20 @@ void tick(){
 
 /* This function is called before we send. */
 void data_manipulation() {
-  delay(9000);
+  delay((TIME_BETWEEN_RECORDINGS-1)*1000);
     if (last!= 0){
       if (secondLast != 0){
-        write_buffer[1] = (uint8_t)floor((secondLast*5+last*7+(double)count)/22*10+.5);
+        write_buffer[1] = (uint8_t)floor((secondLast*5+last*7+(double)count/TIME_BETWEEN_RECORDINGS*10)/22*10+.5);
       }
       else{
-        write_buffer[1] = (uint8_t)floor((last*7+(double)count)/12*10+.5);
+        write_buffer[1] = (uint8_t)floor((last*7+(double)count/TIME_BETWEEN_RECORDINGS*10)/17*10+.5);
       }
       secondLast = last;
     }
     else {
-      write_buffer[1] = (uint8_t)floor(((double)count/10)*10+.5);
+      write_buffer[1] = (uint8_t)floor(((double)count/TIME_BETWEEN_RECORDINGS)*10+.5);
     }
-    last = (double)count/10;
+    last = (double)count/(TIME_BETWEEN_RECORDINGS);
     count = 0;
 }
 

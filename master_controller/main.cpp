@@ -54,6 +54,16 @@ Ticker tick_arduino, tick_lcd, tick_time_lcd;
 Ticker t_gear, t_landing, t_turn_signal;
 //Timeout timeout;
 
+/* Some constants required */
+
+
+const int SPOKES = 32;
+const double DIAMETER_OF_WHEEL = 26.0;
+const double CONVERSION_FROM_TICKS_TO_SPEED = math.pi*2*DIAMETER_OF_WHEEL/SPOKES*3600/(5280*12);
+
+
+
+
 /* I2C values */
 uint8_t read_addr = 0x7 << 1 | 0x1;
 uint8_t write_addr = 0x7 << 1;
@@ -114,6 +124,9 @@ void init() {
 //Debouncer variables for shifting
 uint8_t shift_up_hold = 0;
 uint8_t shift_down_hold = 0;
+
+//Is the debounce ever undone? Because I dont see the debounce undone unless the button is triggered twice.. is this supposed to happen? 
+
 void shift_gear_fn() {
 	if (shift_up.read()) {
 		pc.printf("shift up...");
@@ -178,6 +191,10 @@ void turn_signal_fn() {
 	//send_sensor('r', right_turn);
 }
 
+
+double calculatespeed(uint8_t ticks){
+	return ((double) ticks)* CONVERSION_FROM_TICKS_TO_SPEED;
+}
 
 void lcd_update_gear() {
 	lcd.character(7,1,'0'+(char)( gear/10));
@@ -267,11 +284,11 @@ void get_updates() {
 		if (arduino_updates[i] != 255) {
 			switch (i) {
 				case 0:
-					speed = (double) ((uint8_t) arduino_updates[i] * 3.0 / 10.0); // speed converion 
+					speed = calculatespeed((uint8_t) arduino_updates[i]); // speed converion 
 					lcd_update_speed();
 					break;
 				case 1:
-					cadence = arduino_updates[i];
+					cadence = (double) arduino_updates[i] /10.0;
 					lcd_update_cadence();
 					break;
 				case 2:
