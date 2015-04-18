@@ -19,7 +19,11 @@ void user_setup() {
 }
 
 /* Allows user to clean things up before a long shutdown. */
-void user_shutdown() {}
+void user_shutdown() {
+  digitalWrite(extendPin, HIGH); //start off in extended state
+  delay(1000);
+  digitalWrite(extendPin, LOW);
+}
 
 void manipulate_data(char* data) {
   if (data[1] == 0) {

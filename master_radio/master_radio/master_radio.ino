@@ -22,7 +22,6 @@ RF24 radio(8, 7);
 
 const uint8_t SHUTDOWN_CHAR = 'x';
 
-bool klondike = true;//Set to false if uploading to burnt toast
 const uint64_t rf24_addr = klondike? 0x00F0F0F0F0LL : 0x00E0E0E0E0LL;
 const uint64_t base_addr = klondike? 0xF0F0F0F000LL : 0xE0E0E0E000LL;
 char sensor_data[NUM_SENSORS];

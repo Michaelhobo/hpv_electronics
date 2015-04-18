@@ -1,4 +1,5 @@
 #define MYADDR 255
+#define klondike true
 
 #define CONNECTED_DELAY 1000
 #define SLEEP_DELAY 2000
