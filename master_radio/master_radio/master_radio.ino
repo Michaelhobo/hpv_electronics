@@ -28,6 +28,11 @@ const uint64_t base_addr = klondike? 0xF0F0F0F000LL : 0xE0E0E0E000LL;
 char sensor_data[NUM_SENSORS];
 char rf24_in[RF24_TRANSFER_SIZE];
 char rf24_out[RF24_TRANSFER_SIZE];
+
+const int SPOKES = 32;
+const double DIAMETER_OF_WHEEL = 26.0;
+const double CONVERSION_FROM_TICKS_TO_SPEED = math.pi*2*DIAMETER_OF_WHEEL/SPOKES*3600/(5280*12);
+
 uint8_t check = 0;
 uint8_t shutdownOn = 0;
 uint8_t count = 0;
@@ -104,6 +109,10 @@ void initiateShutdown(){
        shutdownThis();
 }
 
+double calculatespeed(uint8_t ticks){
+  return ticks*CONVERSION_FROM_TICKS_TO_SPEED;
+}
+
 void send_slave(uint8_t id, char data) {
   rf24_out[0] = 'b';
   rf24_out[1] = data;
@@ -143,13 +152,16 @@ void loop(void)
     switch (rf24_in[0]) {
       case 0: //speed
         if (check!=1){
-        sensor_data[0] = rf24_in[1];
+/*        double spd = 0.0;
+        spd = calculatespeed(rf24_in[1]);
+        sensor_data[0] = spd;*/
+        sensor_data[0] = rf24_in[1]; //Not sure if this is going to exist in the final code or the commeneted-out section above.
         Serial.println("from speed sensor");
         }
         break;
       case 1: //cadence
       if (check!=1){
-        sensor_data[1] = rf24_in[1];
+        sensor_data[1] = rf24_in[1]/* /10 */; //once again depends on how much data the i2c can transfer.
         Serial.println("from cadence sensor");
       }
         break;

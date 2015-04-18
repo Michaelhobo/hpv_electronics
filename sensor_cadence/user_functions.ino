@@ -22,15 +22,15 @@ void data_manipulation() {
   delay(9000);
     if (last!= 0){
       if (secondLast != 0){
-        write_buffer[1] = (uint8_t)ceil((secondLast*5+last*7+(double)count)/22*10+.5);
+        write_buffer[1] = (uint8_t)floor((secondLast*5+last*7+(double)count)/22*10+.5);
       }
       else{
-        write_buffer[1] = (uint8_t)ceil((last*7+(double)count)/12*10+.5);
+        write_buffer[1] = (uint8_t)floor((last*7+(double)count)/12*10+.5);
       }
       secondLast = last;
     }
     else {
-      write_buffer[1] = (uint8_t)ceil(((double)count/10)*10+.5);
+      write_buffer[1] = (uint8_t)floor(((double)count/10)*10+.5);
     }
     last = (double)count/10;
     count = 0;
