@@ -96,7 +96,7 @@ bool read_data() {
 		hasRead=radio.read(read_buffer, RF24_TRANSFER_SIZE);
 		Serial.println("Successfully read data");
                 if(read_buffer[1] == 'x'){
-                    shutdown_all();
+                    onShutdown = 1;
                 }
                 else {
 		    manipulate_data(read_buffer);

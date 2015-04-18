@@ -7,12 +7,13 @@
  */
 
 uint8_t extendPin = 3;
-uint8_t retractPin = 9;
+uint8_t retractPin = 10;
 
 /* Allows user to set things up. */
 void user_setup() {
   pinMode(extendPin, OUTPUT);
   pinMode(retractPin, OUTPUT);
+  digitalWrite(retractPin, LOW);
   digitalWrite(extendPin, HIGH); //start off in extended state
   delay(1000);
   digitalWrite(extendPin, LOW);
