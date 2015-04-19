@@ -22,8 +22,8 @@ RF24 radio(8, 7);
 
 const uint8_t SHUTDOWN_CHAR = 'x';
 
-const uint64_t rf24_addr = klondike? 0x00F0F0F0F0LL : 0x00E0E0E0E0LL;
-const uint64_t base_addr = klondike? 0xF0F0F0F000LL : 0xE0E0E0E000LL;
+const uint64_t rf24_addr = 0x00F0F0F0F0LL;//klondike? 0x00F0F0F0F0LL : 0x00E0E0E0E0LL;
+const uint64_t base_addr = 0xF0F0F0F000LL; //klondike? 0xF0F0F0F000LL : 0xE0E0E0E000LL;
 char sensor_data[NUM_SENSORS];
 char rf24_in[RF24_TRANSFER_SIZE];
 char rf24_out[RF24_TRANSFER_SIZE];

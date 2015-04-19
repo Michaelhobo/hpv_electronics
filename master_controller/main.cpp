@@ -41,12 +41,12 @@ xbee xbee(p13, p14, p12);
 I2C arduino(p9, p10);
 //InterruptIn critical(p8);
 
-DigitalIn shift_up(p5);
-DigitalIn shift_down(p6);
-DigitalIn landing_up(p7);
-DigitalIn landing_down(p8);
-DigitalIn turn_left(p11);
-DigitalIn turn_right(p14);
+DigitalIn shift_up(p15);
+DigitalIn shift_down(p16);
+DigitalIn landing_up(p17);
+DigitalIn landing_down(p18);
+DigitalIn turn_left(p19);
+DigitalIn turn_right(p20);
 
 TextLCD lcd(p21,p22,p23,p24,p25,p26);
 
@@ -56,10 +56,10 @@ Ticker t_gear, t_landing, t_turn_signal;
 
 /* Some constants required */
 
-
+const double pi = 3.14159265358979323846;
 const int SPOKES = 32;
 const double DIAMETER_OF_WHEEL = 26.0;
-const double CONVERSION_FROM_TICKS_TO_SPEED = math.pi*2*DIAMETER_OF_WHEEL/SPOKES*3600/(5280*12);
+const double CONVERSION_FROM_TICKS_TO_SPEED = pi*2*DIAMETER_OF_WHEEL/SPOKES*3600/(5280*12);
 
 
 
@@ -69,7 +69,7 @@ uint8_t read_addr = 0x7 << 1 | 0x1;
 uint8_t write_addr = 0x7 << 1;
 char out[2];
 char xbee_data[NUM_SENSORS + 2];
-char arduino_updates = xbee_data + 1;
+char* arduino_updates = xbee_data + 1;
 
 /* Data Values. */
 double speed = 0.0; //calculated speed
@@ -134,6 +134,7 @@ void shift_gear_fn() {
 			gear++;
 			pc.printf("no hold, shift to gear %d\n\r", gear);
 			send_sensor('g', gear);
+			lcd_update_gear();
 		}
 		shift_up_hold = 1;
 	} else {
@@ -145,6 +146,7 @@ void shift_gear_fn() {
 			gear--;
 			pc.printf("no hold, shift to gear %d\n\r", gear);
 			send_sensor('g', gear);
+			lcd_update_gear();
 		}
 		shift_down_hold = 1;
 	} else {
@@ -157,19 +159,19 @@ void shift_gear_fn() {
 
 //Landing gear: 0 = up, 1 = down.
 void landing_fn() {
-	if (landing_up.read()) {
+	if (landing_up.read() && landing_gear) {
 		landing_gear = 0;
-		//send_sensor('l', 0);
-	} else if (landing_down.read()) {
+		send_sensor('l', 0);
+	} else if (landing_down.read() && !landing_gear) {
 		landing_gear = 1;
-		//send_sensor('l', 1);
+		send_sensor('l', 1);
 	} else {    //Automatic controller
 		if (landing_gear && (speed > 10)) { //Landing gear down but fast
 			landing_gear = 0;
-			//send_sensor('l', 0);
+			send_sensor('l', 0);
 		} else if (!landing_gear && speed < 5) { //Landing gear up but slow
 			landing_gear = 1;
-			//send_sensor('l', 1);
+			send_sensor('l', 1);
 		}
 	}
 }
@@ -223,19 +225,19 @@ void lcd_update_time() {
 	lcd.character(12,3,'0'+(char)((int)last_time%60/10));
 	lcd.character(13,3,'0'+(char)((int)last_time%60%10));
 }
-/**
-	void lcd_update_landing_gear() {
-	if (landing_gear_mode == 0) { //if "a"uto
-	lcd.character(3,0,065);     
-	} else if (landing_gear_mode ==1) { //if "m"anual
-	lcd.character(3,0,077);
+
+void lcd_update_landing_gear() {
+	if (!landing_up.read() && !landing_down.read() == 0) { //if "a"uto
+		lcd.character(3,0,65);     
+	} else { //if "m"anual
+		lcd.character(3,0,77);
 	}
-	if (landing_gear == 0) { //if "u"p
-	lcd.character(3,0,85);      
-	} else if (landing_gear_mode ==1) { //if "d"own
-	lcd.character(3,0,068);
+		if (!landing_gear) { //if "u"p
+		lcd.character(4,0,85);      
+	} else if (landing_gear) { //if "d"own
+		lcd.character(4,0,68);
 	}
-	}*/
+}
 
 void lcd_display_init() {
 	lcd.character(6,0,71);
@@ -270,7 +272,7 @@ void lcd_display_init() {
 	lcd_update_cadence();
 	lcd_update_speed();
 	lcd_update_time();
-	//lcd_update_landing_gear();
+	lcd_update_landing_gear();
 }
 
 
@@ -303,7 +305,7 @@ void get_updates() {
 			}
 		}
 	}
-	xbee_update();
+	xbee_update('u');
 }
 
 /* Send to a sensor with an id. */

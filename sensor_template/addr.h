@@ -4,4 +4,3 @@
 #define SLEEP_DELAY 2000
 #define DEEP_SLEEP_DELAY 5000
 
-bool klondike = true;

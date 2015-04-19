@@ -18,8 +18,8 @@ int last_time = 0;
 uint8_t check = 0;
 uint8_t onShutdown = 0;
 
-const uint64_t masterAddress = klondike? 0x00F0F0F0F0LL : 0x00E0E0E0E0LL;
-const uint64_t myAddress = klondike? (0xF0F0F0F000LL | MYADDR) : (0xE0E0E0E000LL | MYADDR);
+const uint64_t masterAddress = 0x00F0F0F0F0LL;
+const uint64_t myAddress = 0xF0F0F0F000LL | MYADDR;
 
 
 ISR(WDT_vect)
