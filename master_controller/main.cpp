@@ -159,12 +159,16 @@ void shift_gear_fn() {
 
 //Landing gear: 0 = up, 1 = down.
 void landing_fn() {
-	if (landing_up.read() && landing_gear) {
-		landing_gear = 0;
-		send_sensor('l', 0);
-	} else if (landing_down.read() && !landing_gear) {
-		landing_gear = 1;
-		send_sensor('l', 1);
+	if (landing_up.read()) {
+		if (landing_gear) {
+			landing_gear = 0;
+			send_sensor('l', 0);
+		}
+	} else if (landing_down.read()) {
+		if (!landing_gear) {
+			landing_gear = 1;
+			send_sensor('l', 1);
+		}
 	} else {    //Automatic controller
 		if (landing_gear && (speed > 10)) { //Landing gear down but fast
 			landing_gear = 0;
@@ -174,6 +178,7 @@ void landing_fn() {
 			send_sensor('l', 1);
 		}
 	}
+	lcd_update_landing_gear();
 }
 
 void turn_signal_fn() {
@@ -227,7 +232,7 @@ void lcd_update_time() {
 }
 
 void lcd_update_landing_gear() {
-	if (!landing_up.read() && !landing_down.read() == 0) { //if "a"uto
+	if (!landing_up.read() && !landing_down.read()) { //if "a"uto
 		lcd.character(3,0,65);     
 	} else { //if "m"anual
 		lcd.character(3,0,77);
