@@ -14,12 +14,15 @@ char read_buffer[RF24_TRANSFER_SIZE];
 RF24 radio(8, 7);
 uint8_t missed = 0;
 uint8_t state;
+const uint8_t COUNT_TIME = 150;
 int last_time = 0;
 uint8_t check = 0;
 uint8_t onShutdown = 0;
 
 const uint64_t masterAddress = 0x00F0F0F0F0LL;
 const uint64_t myAddress = 0xF0F0F0F000LL | MYADDR;
+uint8_t powerDown = 0;
+uint8_t powerDownCount = 0;
 
 
 ISR(WDT_vect)
@@ -60,6 +63,7 @@ void setup(void)
         WDTCSR |= _BV(WDIE);
 }
 
+
 void shutdown_all(){
     user_shutdown(); //Prioritize whatever the user wants to shut down first, before the execution of the shutdown of arduino.
     radio.powerDown();
@@ -70,11 +74,17 @@ void shutdown_all(){
                               // THE PROGRAM CONTINUES FROM HERE AFTER WAKING UP
     sleep_disable();         // first thing after waking from sleep:
                              // disable sleep...
-    radio.powerUp();
-    radio.openReadingPipe(1, myAddress);
-    radio.openWritingPipe(masterAddress);
-    radio.startListening();
-    delay(400);
+      powerDownCount++;
+    if (powerDown&&powerDownCount < COUNT_TIME){
+    }
+    else{
+      if (powerDown){
+        powerDownCount = 0;
+      }
+      radio.powerUp();
+      radio.startListening();
+      delay(400);
+    }
 }
 
 bool ping_master() {
@@ -86,8 +96,8 @@ bool ping_master() {
 	} else  {
 		Serial.println("write failed.\n\r");
 	}
-	return received;
         radio.startListening();
+	return received;
 }
 
 bool read_data() {
@@ -108,14 +118,19 @@ bool read_data() {
 
 void loop(void)
 {    
-	read_data();
+	if (read_data()){
+            powerDownCount = 0;
+            powerDown = 0;
+        }
         if (onShutdown== 1)
         {
+          if (powerDownCount > 113 && !powerDown){
+            powerDown = 1;
+          }
           shutdown_all();
         }
 	if (millis() > last_time + PING_DELAY) {
 		ping_master();
 		last_time = millis();
-	}
-        
+	}       
 }

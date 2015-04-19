@@ -31,6 +31,10 @@ char rf24_out[RF24_TRANSFER_SIZE];
 uint8_t check = 0;
 uint8_t shutdownOn = 0;
 uint8_t count = 0;
+uint8_t powerDown = 0;
+uint8_t powerDownCount = 0;
+const uint8_t COUNT_TIME = 150; 
+
 
 ISR(wdt_vect){
   check = 1;
@@ -84,13 +88,17 @@ void shutdownThis(){
        sleep_enable();          // enables the sleep bit in the mcucr register    
        sleep_mode();            // here the device is actually put to sleep!! 
                                 // THE PROGRAM CONTINUES FROM HERE AFTER WAKING UP
-       sleep_disable();         // first thing after waking from sleep:
-                                // disable sleep...
-       radio.powerUp();
-       //radio.openReadingPipe(1, rf24_addr);
-       //radio.openWritingPipe((const uint64_t) base_addr);
-       radio.startListening();
-       delay(400);
+       powerDownCount++;
+       if (powerDown&&powerDownCount < COUNT_TIME){
+       }
+       else{
+           if (powerDown){
+             powerDownCount = 0;
+           }
+           radio.powerUp();
+           radio.startListening();
+           delay(400);
+      }
 }
 
 void initiateShutdown(){
@@ -135,66 +143,76 @@ void loop(void)
       shutdownThis();
   }
     // if there is data ready
-  if ( radio.available() )
-  {
-    radio.read(rf24_in, RF24_TRANSFER_SIZE);
-    // Spew it
-    Serial.print("Got payload ...");
-    Serial.print(rf24_in);
-    switch (rf24_in[0]) {
-      case 0: //speed
-        if (check!=1){
-        sensor_data[0] = rf24_in[1];
-        Serial.println("from speed sensor");
-        }
-        break;
-      case 1: //cadence
-      if (check!=1){
-        sensor_data[1] = rf24_in[1]; 
-        Serial.println("from cadence sensor");
-      }
-        break;
-      case 2: //temp
-      if (check!=1){
-        sensor_data[2] = rf24_in[1];
-        Serial.println("from temperature sensor");
-      }
-        break;
-      case 3: //brightness
-      if (check!=1){       
-        Serial.println("from brightness sensor");
-        sensor_data[3] = rf24_in[1];
-      }
-        break;
-      case 4: //occupancy
-        sensor_data[4] = rf24_in[1];
-        if(rf24_in[1] == 0){
-          if (count >= 3){
-            initiateShutdown();            
+  if (!(powerDown && powerDownCount < COUNT_TIME)){
+    if ( radio.available() )
+    {
+      radio.read(rf24_in, RF24_TRANSFER_SIZE);
+      // Spew it
+      Serial.print("Got payload ...");
+      Serial.print(rf24_in);
+      switch (rf24_in[0]) {
+        case 0: //speed
+          if (check!=1){
+            sensor_data[0] = rf24_in[1];
+            Serial.println("from speed sensor");
           }
-          else {
-            count++;
-          }         
-        }
-        else if (shutdownOn == 1)
-        {
+          break;
+        case 1: //cadence
+          if (check!=1){
+            sensor_data[1] = rf24_in[1]; 
+            Serial.println("from cadence sensor");
+          }
+          break;
+       case 2: //temp
+          if (check!=1){
+              sensor_data[2] = rf24_in[1];
+              Serial.println("from temperature sensor");
+          }
+          break;
+       case 3: //brightness
+          if (check!=1){       
+            Serial.println("from brightness sensor");
+            sensor_data[3] = rf24_in[1];
+          }
+          break;
+      case 4: //occupancy
+          sensor_data[4] = rf24_in[1];
+          if(rf24_in[1] == 0){
+            if (count >= 3){
+              initiateShutdown();            
+            }
+            else if (powerDownCount >= 113 && powerDown == 0){
+              powerDown = 1;
+              powerDownCount = 0;
+            }
+            else{
+              count++;
+            }         
+          }
+          else if (shutdownOn == 1)
+          {   
+            count = 0;
+            powerDown = 0;
+            powerDownCount = 0;
             shutdownOn = 0;
-        }
-        break;
-      case 5: //humidity
-        break;
-      
-      case 'g': //gear shift
-        break;
-      case 'f': //front light
-        break;
-      case 'r': //right turn
-        break;
-      case 't': //left turn
-        break;
-      case 'l': //landing gear
-        break;
-    }
+          }
+          break;
+        case 5: //humidity
+          break;
+          
+        case 'g': //gear shift
+          break;
+        case 'f': //front light
+          break;
+        case 'r': //right turn
+          break;
+        case 't': //left turn
+          break;
+        case 'l': //landing gear
+          break;
+      }
+     }
   }
 }
+
 // vim:cin:ai:sts=2 sw=2 ft=cpp
