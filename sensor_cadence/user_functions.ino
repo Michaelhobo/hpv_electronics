@@ -7,7 +7,7 @@
 
 /* Allows user to set things up. */
 void user_setup() {
-  attachInterrupt(0, tick, RISING);
+  attachInterrupt(1, tick, RISING);
 }
 
 const int TIME_BETWEEN_RECORDINGS = 10;
