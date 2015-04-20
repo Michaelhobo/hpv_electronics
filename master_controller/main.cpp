@@ -163,19 +163,23 @@ void landing_fn() {
 		if (landing_gear) {
 			landing_gear = 0;
 			send_sensor('l', 0);
+			pc.printf("mu");
 		}
 	} else if (landing_down.read()) {
 		if (!landing_gear) {
 			landing_gear = 1;
 			send_sensor('l', 1);
+			pc.printf("md");
 		}
 	} else {    //Automatic controller
 		if (landing_gear && (speed > 10)) { //Landing gear down but fast
 			landing_gear = 0;
 			send_sensor('l', 0);
+			pc.printf("au");
 		} else if (!landing_gear && speed < 5) { //Landing gear up but slow
 			landing_gear = 1;
 			send_sensor('l', 1);
+			pc.printf("ad");
 		}
 	}
 	lcd_update_landing_gear();
