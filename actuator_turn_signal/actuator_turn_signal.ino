@@ -21,8 +21,8 @@ uint8_t onShutdown = 0;
 
 const uint64_t masterAddress = 0x00F0F0F0F0LL;
 const uint64_t myAddress = 0xF0F0F0F000LL | MYADDR;
-uint8_t powerDown = 0;
-uint8_t powerDownCount = 0;
+uint8_t powerOff = 0;
+uint8_t powerOffCount = 0;
 
 
 ISR(WDT_vect)
@@ -74,12 +74,12 @@ void shutdown_all(){
                               // THE PROGRAM CONTINUES FROM HERE AFTER WAKING UP
     sleep_disable();         // first thing after waking from sleep:
                              // disable sleep...
-      powerDownCount++;
-    if (powerDown&&powerDownCount < COUNT_TIME){
+      powerOffCount++;
+    if (powerOff&&powerOffCount < COUNT_TIME){
     }
     else{
-      if (powerDown){
-        powerDownCount = 0;
+      if (powerOff){
+        powerOffCount = 0;
       }
       radio.powerUp();
       radio.startListening();
@@ -119,13 +119,13 @@ bool read_data() {
 void loop(void)
 {    
 	if (read_data()){
-            powerDownCount = 0;
-            powerDown = 0;
+            powerOffCount = 0;
+            powerOff = 0;
         }
         if (onShutdown== 1)
         {
-          if (powerDownCount > 113 && !powerDown){
-            powerDown = 1;
+          if (powerOffCount > 113 && !powerOff){
+            powerOff = 1;
           }
           shutdown_all();
         }

@@ -27,14 +27,20 @@ void user_shutdown() {
 }
 
 void manipulate_data(char* data) {
-  if (data[1] == 0) {
-    digitalWrite(retractPin, HIGH);
-    delay(1000);
-    digitalWrite(retractPin, LOW);
-  } else if (data[1] == 1) {
-    digitalWrite(extendPin, HIGH);
-    delay(1000);
-    digitalWrite(extendPin, LOW);
+  if (data[0] == 'b') {
+    if (data[1] == 0) {
+      digitalWrite(retractPin, HIGH);
+      delay(1000);
+      digitalWrite(retractPin, LOW);
+      Serial.println("I'm high");
+    } else if (data[1] == 1) {
+      digitalWrite(extendPin, HIGH);
+      delay(1000);
+      digitalWrite(extendPin, LOW);
+      Serial.println("I need drugs");
+    } else {
+      Serial.println("fuck you --hat boy");
+    }
   }
 }
 
