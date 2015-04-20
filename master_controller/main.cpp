@@ -300,6 +300,7 @@ void get_updates() {
 					break;
 				case 1:
 					cadence = (double) arduino_updates[i] /10.0;
+					pc.printf("cadence received\n\r");
 					lcd_update_cadence();
 					break;
 				case 2:

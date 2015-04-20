@@ -129,8 +129,8 @@ void loop(void)
           }
           shutdown_all();
         }
-	if (millis() > last_time + PING_DELAY) {
+	/*if (millis() > last_time + PING_DELAY) {
 		ping_master();
 		last_time = millis();
-	}       
+	} */      
 }

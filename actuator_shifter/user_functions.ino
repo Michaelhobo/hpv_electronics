@@ -19,6 +19,8 @@ void user_setup() {
 void user_shutdown() {}
 
 void manipulate_data(char* data) {
-  servo.write(gear_positions[data[1] - 1]);
+  if (data[0] == 'b') {
+    servo.write(gear_positions[data[1] - 1]);
+  }
 }
 

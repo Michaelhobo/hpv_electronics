@@ -41,6 +41,8 @@ void data_manipulation() {
     else {
       write_buffer[1] = (uint8_t)floor(((double)count/TIME_BETWEEN_RECORDINGS)*10+.5);
     }
+    Serial.println(count);
+    Serial.println(write_buffer[1]);
     last = (double)count/(TIME_BETWEEN_RECORDINGS);
     count = 0;
     Serial.println(write_buffer[1]);
