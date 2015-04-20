@@ -10,11 +10,12 @@ void user_setup() {
   attachInterrupt(1, tick, RISING);
 }
 
-const int TIME_BETWEEN_RECORDINGS = 10;
+
+int counts [10];
 int count = 0;
-double last = 0;
-double secondLast = 0;
 uint8_t debounce = 0;
+int counter = 0;
+uint8_t firsttime = 1;
 void tick(){
   if (!debounce)
   {
@@ -28,20 +29,34 @@ void tick(){
 
 /* This function is called before we send. */
 void data_manipulation() {
-  delay((TIME_BETWEEN_RECORDINGS-1)*1000);
-    if (last!= 0){
-      if (secondLast != 0){
-        write_buffer[1] = (uint8_t)floor((secondLast*5+last*7+(double)count/TIME_BETWEEN_RECORDINGS*10)/22*10+.5);
-      }
-      else{
-        write_buffer[1] = (uint8_t)floor((last*7+(double)count/TIME_BETWEEN_RECORDINGS*10)/17*10+.5);
-      }
-      secondLast = last;
+    double total = 0;
+    counts[counter] = count;
+    if (counter == 9){
+      counter= 0;
+      firsttime = 0;
     }
-    else {
-      write_buffer[1] = (uint8_t)floor(((double)count/TIME_BETWEEN_RECORDINGS)*10+.5);
+    else{ counter++;}
+    if (firsttime){
+      for (int i = 0; i< counter; i++)
+      {
+         total+=counts[counter];
+      }
     }
-    last = (double)count/(TIME_BETWEEN_RECORDINGS);
+    else{
+      for (int i = 0; i< 10; i++)
+        {
+           total+=counts[counter];
+        }
+    }
+    if (firsttime){
+      total = (total/counter)*60;
+    }
+    else{
+      total *= 6;
+    }
+    write_buffer[1] = (uint8_t) total;
+    Serial.println(total);
+    Serial.println(count);
     count = 0;
     Serial.println(write_buffer[1]);
 }
