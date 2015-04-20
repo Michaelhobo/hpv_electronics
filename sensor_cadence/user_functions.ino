@@ -14,8 +14,16 @@ const int TIME_BETWEEN_RECORDINGS = 10;
 int count = 0;
 double last = 0;
 double secondLast = 0;
+uint8_t debounce = 0;
 void tick(){
-  count++;
+  if (!debounce)
+  {
+    debounce = 1;
+    count++;
+    delay(100);
+    debounce = 0;
+  }
+  
 }
 
 /* This function is called before we send. */
@@ -35,6 +43,7 @@ void data_manipulation() {
     }
     last = (double)count/(TIME_BETWEEN_RECORDINGS);
     count = 0;
+    Serial.println(write_buffer[1]);
 }
 
 /* These functions are called after we send data,
