@@ -6,25 +6,33 @@
  */
 
 /* Allows user to set things up. */
+
+int secondInput = 5;
+int ledShow = 7;
+
 void user_setup() {
-  attachInterrupt(1, tick, RISING);
+  attachInterrupt(1, tick, CHANGE);
+  pinMode(secondInput, INPUT);
+  pinMode(ledShow, OUTPUT);
 }
+
 
 
 int counts [10];
 int count = 0;
-uint8_t debounce = 0;
+uint8_t laststate = 0;
 int counter = 0;
 uint8_t firsttime = 1;
 void tick(){
-  if (!debounce)
+  uint8_t state = digitalRead(secondInput);
+  if (state!=laststate)
   {
-    debounce = 1;
-    count++;
-    delay(100);
-    debounce = 0;
+    if(state == HIGH){
+      count++;
+    }
+    laststate = state;
+    digitalWrite(ledShow, state);
   }
-  
 }
 
 /* This function is called before we send. */
