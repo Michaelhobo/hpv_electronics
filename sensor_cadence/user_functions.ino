@@ -20,8 +20,6 @@ uint8_t firsttime = 1;
 void user_setup() {
 
   attachInterrupt(1, tick, RISING);
-  pinMode(secondInput, INPUT);
-  pinMode(ledShow, OUTPUT);
 }
 void tick(){
   Serial.println("Triggered");
