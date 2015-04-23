@@ -8,16 +8,21 @@
 /* Allows user to set things up. */
 
 int secondInput = 5;
+
 int ledShow = 7;
 
 void user_setup() {
-  attachInterrupt(1, tick, CHANGE);
+  attachInterrupt(1, tick, RISING);
   pinMode(secondInput, INPUT);
   pinMode(ledShow, OUTPUT);
 }
 
 
-
+void blinkk(){
+  digitalWrite(ledShow, HIGH);
+  delay(20);
+  digitalWrite(ledShow, LOW);
+}
 int counts [10];
 int count = 0;
 uint8_t laststate = 0;
@@ -29,6 +34,7 @@ void tick(){
   {
     if(state == HIGH){
       count++;
+
     }
     laststate = state;
     digitalWrite(ledShow, state);
