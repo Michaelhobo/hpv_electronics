@@ -6,17 +6,23 @@
  */
 
 /* Allows user to set things up. */
-void user_setup() {
-  attachInterrupt(1, tick, LOW);
-}
 
+int secondInput = 5;
 
+int ledShow = 7;
 int counts [60];
 int count = 0;
 int lasttime;
 int currenttime;
 int counter = 0;
 uint8_t firsttime = 1;
+
+void user_setup() {
+
+  attachInterrupt(1, tick, RISING);
+  pinMode(secondInput, INPUT);
+  pinMode(ledShow, OUTPUT);
+}
 void tick(){
   Serial.println("Triggered");
   currenttime = millis();
