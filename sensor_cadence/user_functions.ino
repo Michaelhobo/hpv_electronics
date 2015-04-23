@@ -7,23 +7,23 @@
 
 /* Allows user to set things up. */
 void user_setup() {
-  attachInterrupt(1, tick, RISING);
+  attachInterrupt(1, tick, LOW);
 }
 
 
-int counts [10];
+int counts [60];
 int count = 0;
-uint8_t debounce = 0;
+int lasttime;
+int currenttime;
 int counter = 0;
 uint8_t firsttime = 1;
 void tick(){
-  if (!debounce)
-  {
-    debounce = 1;
-    count++;
-    delay(100);
-    debounce = 0;
+  Serial.println("Triggered");
+  currenttime = millis();
+  if (currenttime-lasttime >= 90){
+    counter++;
   }
+  lasttime = currenttime;
   
 }
 
@@ -31,7 +31,7 @@ void tick(){
 void data_manipulation() {
     double total = 0;
     counts[counter] = count;
-    if (counter == 9){
+    if (counter == 59){
       counter= 0;
       firsttime = 0;
     }
@@ -43,16 +43,13 @@ void data_manipulation() {
       }
     }
     else{
-      for (int i = 0; i< 10; i++)
+      for (int i = 0; i< 60; i++)
         {
            total+=counts[counter];
         }
     }
     if (firsttime){
       total = (total/counter)*60;
-    }
-    else{
-      total *= 6;
     }
     write_buffer[1] = (uint8_t) total;
     Serial.println(total);
