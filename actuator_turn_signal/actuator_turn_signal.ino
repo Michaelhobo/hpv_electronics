@@ -118,6 +118,7 @@ bool read_data() {
 
 void loop(void)
 {    
+        user_loop();
 	if (read_data()){
             powerOffCount = 0;
             powerOff = 0;
@@ -129,8 +130,8 @@ void loop(void)
           }
           shutdown_all();
         }
-	if (millis() > last_time + PING_DELAY) {
+	/*if (millis() > last_time + PING_DELAY) {
 		ping_master();
 		last_time = millis();
-	}       
+	}   */    
 }

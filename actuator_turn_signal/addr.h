@@ -1,2 +1,2 @@
-#define MYADDR 'z'
-#define klondike true
+#define MYADDR 'r'
+//#define MYADDR 't'
