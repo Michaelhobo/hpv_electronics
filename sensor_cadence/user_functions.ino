@@ -7,9 +7,6 @@
 
 /* Allows user to set things up. */
 
-int secondInput = 5;
-
-int ledShow = 7;
 int counts [60];
 int count = 0;
 int lasttime;
@@ -25,7 +22,7 @@ void tick(){
   Serial.println("Triggered");
   currenttime = millis();
   if (currenttime-lasttime >= 90){
-    counter++;
+    count++;
   }
   lasttime = currenttime;
   
@@ -43,13 +40,13 @@ void data_manipulation() {
     if (firsttime){
       for (int i = 0; i< counter; i++)
       {
-         total+=counts[counter];
+         total+=counts[i];
       }
     }
     else{
       for (int i = 0; i< 60; i++)
         {
-           total+=counts[counter];
+           total+=counts[i];
         }
     }
     if (firsttime){
